@@ -128,12 +128,10 @@ export default function ExperimentPage() {
 
     switch (experiment.id) {
       case "bar-pendulum":
-        // g = 4π²L/T² -> simplified using slope if graph is L vs T²
         result = (4 * Math.PI * Math.PI) / (regression.slope || 1);
         break;
       case "youngs-modulus":
-        // Y = (M * g * L³) / (4 * b * d³ * δ)
-        const L_y = 50, b = 2, d = 0.5; // Demo constants
+        const L_y = 50, b = 2, d = 0.5;
         result = (g * Math.pow(L_y, 3)) / (4 * b * Math.pow(d, 3) * (regression.slope || 1));
         break;
       case "rigidity-modulus":
@@ -150,7 +148,7 @@ export default function ExperimentPage() {
         result = (regression.slope / (4 * R)) * 1e7;
         break;
       case "laser-wavelength":
-        result = 6328; // Standard He-Ne Laser for demo or calc from grating
+        result = 6328;
         break;
       case "metre-bridge":
         const mbData = tableData["resistance"] || [];
@@ -240,23 +238,11 @@ export default function ExperimentPage() {
                   <Card className="border-2">
                     <CardHeader><CardTitle>Apparatus</CardTitle></CardHeader>
                     <CardContent>
-                      <ul className="list-disc pl-5 space-y-1">
+                      <ul className="list-disc pl-5 space-y-2">
                         {experiment.apparatus.map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="border-2 overflow-hidden">
-                    <CardHeader className="pb-2"><CardTitle>Setup Diagram</CardTitle></CardHeader>
-                    <CardContent className="p-0">
-                      <img 
-                        src={`https://picsum.photos/seed/${experiment.id}/600/400`} 
-                        alt="Experiment Setup" 
-                        className="w-full aspect-video object-cover"
-                        data-ai-hint="physics setup"
-                      />
                     </CardContent>
                   </Card>
                 </div>
