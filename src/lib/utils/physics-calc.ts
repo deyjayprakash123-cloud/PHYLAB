@@ -1,11 +1,12 @@
 export type DataPoint = {
   x: number;
   y: number;
+  [key: string]: number | string; // Allow for multi-series keys
 };
 
 export function calculateLinearRegression(data: DataPoint[]) {
   const n = data.length;
-  if (n < 2) return { slope: 0, intercept: 0, r2: 0 };
+  if (n < 2) return { slope: 0, intercept: 0, r2: 0, equation: "Insufficient data" };
 
   let sumX = 0;
   let sumY = 0;
@@ -21,7 +22,10 @@ export function calculateLinearRegression(data: DataPoint[]) {
     sumYY += p.y * p.y;
   }
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  const denominator = (n * sumXX - sumX * sumX);
+  if (denominator === 0) return { slope: 0, intercept: 0, r2: 0, equation: "Vertical line" };
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
 
   // Correlation coefficient
@@ -29,7 +33,9 @@ export function calculateLinearRegression(data: DataPoint[]) {
   const rDen = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
   const r2 = rDen === 0 ? 0 : Math.pow(rNum / rDen, 2);
 
-  return { slope, intercept, r2 };
+  const equation = `y = ${slope.toFixed(4)}x ${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept).toFixed(4)}`;
+
+  return { slope, intercept, r2, equation };
 }
 
 export function calculatePercentageError(observed: number, standard: number) {
