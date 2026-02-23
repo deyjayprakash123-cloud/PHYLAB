@@ -37,7 +37,7 @@ export const experiments: Experiment[] = [
     title: "Acceleration due to Gravity (Bar Pendulum)",
     category: "Mechanics",
     aim: "To determine the acceleration due to gravity (g) using a bar pendulum.",
-    apparatus: ["Bar pendulum", "Stopwatch", "Meter scale", "Knife edge support"],
+    apparatus: ["Bar pendulum", "Stopwatch", "Meter scale", "Knife edge support", "Telescope"],
     theory: "A bar pendulum is a physical pendulum. The time period T of a physical pendulum for small oscillations is given by T = 2π√(I/mgL).",
     formula: "g = 4π²L/T²",
     standardValue: 981,
@@ -61,7 +61,7 @@ export const experiments: Experiment[] = [
         label: "Table 2: Equivalent Length Calculation",
         columns: [
           { key: "sl_no", label: "Sl No." },
-          { key: "eq_len", label: "Eq. Length L", unit: "cm" },
+          { key: "eq_len", label: "Equivalent Length L", unit: "cm" },
           { key: "T_period", label: "Time Period T", unit: "s" },
           { key: "L_T2", label: "L/T²" },
         ]
@@ -84,7 +84,7 @@ export const experiments: Experiment[] = [
         title: "Equivalent Length (L) vs T²",
         tableId: "eq-len-calc",
         xKey: "eq_len",
-        yKey: "T_period", // Note: Usually L vs T^2, we'll map this in page
+        yKey: "T_period",
         xLabel: "L",
         yLabel: "T²",
         xUnit: "cm",
@@ -97,7 +97,7 @@ export const experiments: Experiment[] = [
     title: "Young’s Modulus (Bending of Beam)",
     category: "Properties of Matter",
     aim: "To determine Young’s Modulus of the material of a rectangular beam by the method of bending.",
-    apparatus: ["Rectangular beam", "Knife edges", "Spherometer", "Weights"],
+    apparatus: ["Rectangular beam", "Knife edges", "Screw gauge", "Vernier caliper", "Weights", "Spherometer"],
     theory: "Young's modulus Y = MgL³ / 4bd³δ, where M is load and δ is depression.",
     formula: "Y = (M * g * L³) / (4 * b * d³ * δ)",
     standardValue: 2e12,
@@ -110,10 +110,10 @@ export const experiments: Experiment[] = [
           { key: "obs_no", label: "Obs No" },
           { key: "icsr", label: "ICSR" },
           { key: "n_rot", label: "N (Rotations)" },
-          { key: "psr", label: "PSR" },
+          { key: "psr", label: "PSR (N×P)" },
           { key: "diff", label: "Diff (I-F)" },
-          { key: "csr", label: "CSR" },
-          { key: "total", label: "Total", unit: "cm" },
+          { key: "csr", label: "CSR (Diff×LC)" },
+          { key: "total", label: "Total (PSR+CSR)", unit: "cm" },
         ]
       },
       {
@@ -123,20 +123,25 @@ export const experiments: Experiment[] = [
           { key: "obs_no", label: "Obs No" },
           { key: "msr", label: "MSR", unit: "cm" },
           { key: "vc", label: "VC" },
-          { key: "vsr", label: "VSR" },
-          { key: "total", label: "Total", unit: "cm" },
+          { key: "vsr", label: "VSR (VC×LC)" },
+          { key: "total", label: "Total (MSR+VSR)", unit: "cm" },
         ]
       },
       {
         id: "depression",
         label: "Table 3: Depression Measurement",
         columns: [
-          { key: "load", label: "Load", unit: "g" },
-          { key: "msr_inc", label: "MSR (Inc)", unit: "cm" },
-          { key: "total_inc", label: "Total (Inc)", unit: "cm" },
-          { key: "msr_dec", label: "MSR (Dec)", unit: "cm" },
-          { key: "total_dec", label: "Total (Dec)", unit: "cm" },
-          { key: "mean", label: "Mean", unit: "cm" },
+          { key: "obs_no", label: "Obs No" },
+          { key: "load", label: "Load", unit: "gm" },
+          { key: "msr_inc", label: "MSR (Inc)" },
+          { key: "vc_inc", label: "VC (Inc)" },
+          { key: "vsr_inc", label: "VSR (Inc)" },
+          { key: "total_inc", label: "Total (a)" },
+          { key: "msr_dec", label: "MSR (Dec)" },
+          { key: "vc_dec", label: "VC (Dec)" },
+          { key: "vsr_dec", label: "VSR (Dec)" },
+          { key: "total_dec", label: "Total (b)" },
+          { key: "mean_total", label: "Mean (a+b)/2" },
           { key: "depression", label: "Depression δ", unit: "cm" },
         ]
       }
@@ -150,7 +155,7 @@ export const experiments: Experiment[] = [
         yKey: "depression",
         xLabel: "Load",
         yLabel: "δ",
-        xUnit: "g",
+        xUnit: "gm",
         yUnit: "cm"
       }
     ]
@@ -160,35 +165,47 @@ export const experiments: Experiment[] = [
     title: "Rigidity Modulus (Barton's Apparatus)",
     category: "Properties of Matter",
     aim: "To determine the rigidity modulus (η) of the material of a wire.",
-    apparatus: ["Barton's apparatus", "Weights", "Vernier caliper", "Screw gauge"],
+    apparatus: ["Barton's apparatus", "Weights", "Vernier caliper", "Screw gauge", "Metallic bar", "Scale & telescope"],
     theory: "Rigidity modulus η = (g * d^4 * l) / (π * r^4 * θ), where θ is twist angle.",
     formula: "η = (g * d^4 * l) / (π * r^4 * θ)",
     unit: "dyne/cm²",
     tables: [
       {
         id: "radius",
-        label: "Table 1: Radius of Metallic Bar",
+        label: "Table 1: Radius of Metallic Bar (Screw Gauge)",
         columns: [
           { key: "obs_no", label: "Obs No" },
+          { key: "pitch", label: "Pitch", unit: "cm" },
+          { key: "lc", label: "LC", unit: "cm" },
+          { key: "icsr", label: "ICSR" },
+          { key: "n_rot", label: "N (Rotations)" },
           { key: "psr", label: "PSR" },
+          { key: "diff", label: "Diff" },
           { key: "csr", label: "CSR" },
           { key: "total", label: "Total", unit: "cm" },
         ]
       },
       {
         id: "diameter",
-        label: "Table 2: Diameter of Cylinder",
+        label: "Table 2: Diameter of Cylinder (Vernier)",
         columns: [
           { key: "obs_no", label: "Obs No" },
+          { key: "lc", label: "LC" },
           { key: "msr", label: "MSR" },
+          { key: "vc", label: "VC" },
+          { key: "vsr", label: "VSR" },
           { key: "total", label: "Total", unit: "cm" },
         ]
       },
       {
         id: "twist",
-        label: "Table 3: Twist Angle",
+        label: "Table 3: Twist Angle Measurement",
         columns: [
           { key: "load", label: "Load", unit: "kg" },
+          { key: "end1_inc", label: "End I (Inc)" },
+          { key: "end2_inc", label: "End II (Inc)" },
+          { key: "end1_dec", label: "End I (Dec)" },
+          { key: "end2_dec", label: "End II (Dec)" },
           { key: "mean_angle", label: "Mean Angle", unit: "deg" },
           { key: "twist", label: "Twist θ", unit: "deg" },
         ]
@@ -213,7 +230,7 @@ export const experiments: Experiment[] = [
     title: "Surface Tension (Capillary Rise)",
     category: "Fluid Mechanics",
     aim: "Determine the surface tension of a liquid using the capillary rise method.",
-    apparatus: ["Capillary tube", "Traveling microscope", "Beaker", "Liquid"],
+    apparatus: ["Capillary tube", "Traveling microscope", "Beaker", "Liquid (Water)"],
     theory: "Surface tension T = (r * h * ρ * g) / 2.",
     formula: "T = (r * h * ρ * g) / 2",
     standardValue: 72,
@@ -224,15 +241,31 @@ export const experiments: Experiment[] = [
         label: "Table 1: Height Measurement",
         columns: [
           { key: "tube_no", label: "Tube No" },
+          { key: "msr_men", label: "MSR (Meniscus)" },
+          { key: "vc_men", label: "VC" },
+          { key: "vsr_men", label: "VSR" },
+          { key: "total_r1", label: "Total R1", unit: "cm" },
+          { key: "msr_needle", label: "MSR (Needle)" },
+          { key: "vc_needle", label: "VC" },
+          { key: "vsr_needle", label: "VSR" },
+          { key: "total_r", label: "Total R", unit: "cm" },
           { key: "h", label: "h = R1 - R", unit: "cm" },
         ]
       },
       {
         id: "diameter",
-        label: "Table 2: Diameter Measurement",
+        label: "Table 2: Diameter Measurement (LHS/RHS)",
         columns: [
           { key: "tube_no", label: "Tube No" },
-          { key: "mean_d", label: "Mean D", unit: "cm" },
+          { key: "msr_lhs", label: "MSR (LHS)" },
+          { key: "vc_lhs", label: "VC" },
+          { key: "vsr_lhs", label: "VSR" },
+          { key: "total_a", label: "Total (a)" },
+          { key: "msr_rhs", label: "MSR (RHS)" },
+          { key: "vc_rhs", label: "VC" },
+          { key: "vsr_rhs", label: "VSR" },
+          { key: "total_b", label: "Total (b)" },
+          { key: "d1", label: "D1 = a - b", unit: "cm" },
         ]
       },
       {
@@ -274,18 +307,26 @@ export const experiments: Experiment[] = [
         id: "const-weight",
         label: "Table 1: Constant Weight",
         columns: [
-          { key: "freq", label: "n", unit: "Hz" },
-          { key: "mean_l", label: "l", unit: "cm" },
+          { key: "obs_no", label: "Obs No" },
+          { key: "freq", label: "Frequency n", unit: "Hz" },
+          { key: "l_inc", label: "l (Inc)", unit: "cm" },
+          { key: "l_dec", label: "l (Dec)", unit: "cm" },
+          { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
+          { key: "nl", label: "n × l" },
         ]
       },
       {
         id: "const-freq",
         label: "Table 2: Constant Frequency",
         columns: [
-          { key: "tension", label: "T", unit: "N" },
-          { key: "mean_l", label: "l", unit: "cm" },
+          { key: "obs_no", label: "Obs No" },
+          { key: "tension", label: "Tension T", unit: "N" },
+          { key: "l_inc", label: "l (Inc)", unit: "cm" },
+          { key: "l_dec", label: "l (Dec)", unit: "cm" },
+          { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "l2", label: "l²", unit: "cm²" },
+          { key: "t_l2", label: "T/l²" },
         ]
       }
     ],
@@ -319,7 +360,7 @@ export const experiments: Experiment[] = [
     title: "Newton’s Rings",
     category: "Optics",
     aim: "To determine the wavelength of sodium light using Newton’s Rings.",
-    apparatus: ["Sodium lamp", "Traveling microscope", "Plano-convex lens"],
+    apparatus: ["Sodium lamp", "Traveling microscope", "Plano-convex lens", "Glass plate"],
     theory: "λ = (D²m - D²n) / [4R(m - n)].",
     formula: "λ = (D²m - D²n) / [4R(m - n)]",
     standardValue: 5890,
@@ -330,7 +371,17 @@ export const experiments: Experiment[] = [
         label: "Observation Table: Ring Diameters",
         columns: [
           { key: "ring_no", label: "n" },
-          { key: "diameter", label: "D", unit: "mm" },
+          { key: "icsr", label: "ICSR" },
+          { key: "msr_i", label: "MSR(I)" },
+          { key: "im", label: "IM" },
+          { key: "fcsr", label: "FCSR" },
+          { key: "msr_f", label: "MSR(F)" },
+          { key: "fm", label: "FM" },
+          { key: "diff_if", label: "I-F" },
+          { key: "ncr", label: "NCR" },
+          { key: "csr", label: "CSR" },
+          { key: "psr", label: "PSR" },
+          { key: "total", label: "Total Diameter D", unit: "mm" },
           { key: "d2", label: "D²", unit: "mm²" },
         ]
       }
@@ -363,8 +414,12 @@ export const experiments: Experiment[] = [
         id: "laser-obs",
         label: "Observation Table",
         columns: [
-          { key: "order", label: "m" },
-          { key: "ym", label: "y", unit: "cm" },
+          { key: "sl_no", label: "Sl No" },
+          { key: "lines_cm", label: "Lines/cm" },
+          { key: "grating_element", label: "Grating Element (a+b)" },
+          { key: "order", label: "Order m" },
+          { key: "ym", label: "y (cm)", unit: "cm" },
+          { key: "D_dist", label: "D (cm)", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
           { key: "lambda", label: "λ", unit: "Å" },
         ]
@@ -396,11 +451,12 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "rc-data",
-        label: "Charging & Discharging Table",
+        label: "Charging & Discharging Data Table",
         columns: [
+          { key: "sl_no", label: "Sl No" },
           { key: "time", label: "Time", unit: "s" },
-          { key: "v_charge", label: "Vc", unit: "V" },
-          { key: "v_discharge", label: "Vd", unit: "V" },
+          { key: "v_charge", label: "Charging Voltage", unit: "V" },
+          { key: "v_discharge", label: "Discharging Voltage", unit: "V" },
         ]
       }
     ],
@@ -443,16 +499,22 @@ export const experiments: Experiment[] = [
         id: "input-char",
         label: "Table 1: Input Characteristics",
         columns: [
-          { key: "vbe", label: "VBE", unit: "V" },
-          { key: "ib_1v", label: "IB (1V)", unit: "µA" },
+          { key: "sl_no", label: "Sl No" },
+          { key: "vbe", label: "VBE (V)", unit: "V" },
+          { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
+          { key: "ib_4v", label: "IB at 4V", unit: "µA" },
+          { key: "ib_8v", label: "IB at 8V", unit: "µA" },
         ]
       },
       {
         id: "output-char",
         label: "Table 2: Output Characteristics",
         columns: [
-          { key: "vce", label: "VCE", unit: "V" },
-          { key: "ic_150", label: "IC (150µA)", unit: "mA" },
+          { key: "sl_no", label: "Sl No" },
+          { key: "vce", label: "VCE (V)", unit: "V" },
+          { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
+          { key: "ic_150", label: "IC at 150µA", unit: "mA" },
+          { key: "ic_175", label: "IC at 175µA", unit: "mA" },
         ]
       }
     ],
@@ -495,9 +557,11 @@ export const experiments: Experiment[] = [
         id: "resistance",
         label: "Observation Table",
         columns: [
-          { key: "p_res", label: "P", unit: "Ω" },
-          { key: "l1", label: "l1", unit: "cm" },
-          { key: "q_res", label: "Q", unit: "Ω" },
+          { key: "sl_no", label: "Sl No" },
+          { key: "p_res", label: "Resistance P", unit: "Ω" },
+          { key: "l1", label: "l1 (cm)", unit: "cm" },
+          { key: "l2", label: "l2 = 100-l1", unit: "cm" },
+          { key: "q_res", label: "Q = (l1/l2) × P", unit: "Ω" },
         ]
       }
     ],
@@ -529,10 +593,11 @@ export const experiments: Experiment[] = [
         id: "pn-data",
         label: "V-I Observation Table",
         columns: [
-          { key: "v_forward", label: "Vf", unit: "V" },
-          { key: "i_forward", label: "If", unit: "mA" },
-          { key: "v_reverse", label: "Vr", unit: "V" },
-          { key: "i_reverse", label: "Ir", unit: "µA" },
+          { key: "sl_no", label: "Sl No" },
+          { key: "v_forward", label: "Forward Voltage", unit: "V" },
+          { key: "i_forward", label: "Forward Current", unit: "mA" },
+          { key: "v_reverse", label: "Reverse Voltage", unit: "V" },
+          { key: "i_reverse", label: "Reverse Current", unit: "µA" },
         ]
       }
     ],

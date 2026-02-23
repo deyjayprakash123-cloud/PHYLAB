@@ -34,21 +34,21 @@ export function PhysicsGraph({ data, title, xLabel, yLabel, xUnit, yUnit }: Phys
 
   const regression = calculateLinearRegression(validPoints);
 
-  const handlePointClick = (data: any) => {
-    if (data && data.payload) {
-      const point = data.payload as DataPoint;
+  const handlePointClick = (pointData: any) => {
+    if (pointData && pointData.activePayload && pointData.activePayload[0]) {
+      const point = pointData.activePayload[0].payload as DataPoint;
       setClickedPoint(point);
       toast({
-        title: "Data Point Coordinates",
-        description: `(${xLabel}: ${point.x.toFixed(4)}${xUnit}, ${yLabel}: ${point.y.toFixed(4)}${yUnit})`,
+        title: "Point Coordinates",
+        description: `${xLabel}: ${point.x.toFixed(4)}${xUnit}, ${yLabel}: ${point.y.toFixed(4)}${yUnit}`,
       });
     }
   };
 
   return (
-    <Card className="border-2 overflow-hidden">
+    <Card className="border-2 overflow-hidden shadow-lg">
       <CardHeader className="pb-2 bg-muted/30">
-        <CardTitle className="text-lg font-semibold flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <CardTitle className="text-lg font-bold flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <span>{title}</span>
           {validPoints.length > 1 && (
             <div className="flex gap-2">
@@ -62,19 +62,15 @@ export function PhysicsGraph({ data, title, xLabel, yLabel, xUnit, yUnit }: Phys
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        <div className="h-[400px] w-full mt-4">
+      <CardContent className="p-2 sm:p-6">
+        <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={validPoints} 
-              margin={{ top: 30, right: 30, bottom: 60, left: 60 }}
-              onClick={(e) => {
-                if (e && e.activePayload && e.activePayload[0]) {
-                  handlePointClick(e.activePayload[0]);
-                }
-              }}
+              margin={{ top: 20, right: 30, bottom: 50, left: 50 }}
+              onClick={handlePointClick}
             >
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} opacity={0.3} />
               <XAxis 
                 type="number" 
                 dataKey="x" 
@@ -89,35 +85,32 @@ export function PhysicsGraph({ data, title, xLabel, yLabel, xUnit, yUnit }: Phys
                 name={yLabel} 
                 domain={['auto', 'auto']}
                 unit={yUnit ? ` ${yUnit}` : ""}
-                label={{ value: `${yLabel}${yUnit ? ` (${yUnit})` : ""}`, angle: -90, position: 'insideLeft', offset: -20 }}
+                label={{ value: `${yLabel}${yUnit ? ` (${yUnit})` : ""}`, angle: -90, position: 'insideLeft', offset: -10 }}
               />
               <Tooltip 
                 cursor={{ strokeDasharray: '3 3' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value: number) => value.toFixed(4)}
               />
               <Legend verticalAlign="top" height={36}/>
               <Line
-                name="Experimental Data"
-                type="monotone"
+                name="Experimental Curve"
+                type="linear"
                 dataKey="y"
                 stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--background))" }}
-                activeDot={{ r: 6, onClick: (e, payload) => handlePointClick(payload) }}
-                label={{ 
-                  position: 'top', 
-                  fontSize: 10, 
-                  fill: "hsl(var(--muted-foreground))",
-                  formatter: (val: any, entry: any) => `(${entry.payload.x.toFixed(2)}, ${val.toFixed(2)})`
-                }}
+                strokeWidth={2.5}
+                activeDot={{ r: 7, onClick: (e, payload) => handlePointClick({ activePayload: [payload] }) }}
+                dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 1.5, stroke: "hsl(var(--background))" }}
+                animationDuration={1000}
+                isAnimationActive={true}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
         {clickedPoint && (
-          <div className="px-6 pb-6 text-center">
-            <p className="text-xs text-muted-foreground font-mono">
-              Last selected: <span className="text-primary font-bold">X={clickedPoint.x.toFixed(4)}</span>, <span className="text-primary font-bold">Y={clickedPoint.y.toFixed(4)}</span>
+          <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10 text-center animate-in fade-in slide-in-from-bottom-2">
+            <p className="text-xs font-mono font-semibold text-primary">
+              Selected: ({xLabel}: <span className="text-foreground">{clickedPoint.x.toFixed(4)}</span>, {yLabel}: <span className="text-foreground">{clickedPoint.y.toFixed(4)}</span>)
             </p>
           </div>
         )}
