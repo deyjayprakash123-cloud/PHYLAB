@@ -35,7 +35,7 @@ export default function ExperimentPage() {
     return (
       <div className="container mx-auto p-12 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Experiment Not Found</h1>
-        <Link href="/">
+        <Link href="/dashboard">
           <Button variant="link">Back to Dashboard</Button>
         </Link>
       </div>
@@ -94,7 +94,7 @@ export default function ExperimentPage() {
         const surfData = tableData['final-calc'] || [];
         if (surfData.length === 0) return null;
         const means = surfData.map(row => (parseFloat(row.h) * parseFloat(row.r) * 1 * g) / 2);
-        result = means.reduce((a, b) => a + b, 0) / means.length;
+        result = means.reduce((a, b) => a + b, 0) / (means.length || 1);
         break;
       case "sonometer":
         result = regression.slope; 
@@ -149,7 +149,7 @@ export default function ExperimentPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <nav className="border-b bg-white dark:bg-slate-900 sticky top-0 z-50 no-print shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
             <ChevronLeft className="h-4 w-4" /> DASHBOARD
           </Link>
           <div className="font-extrabold text-slate-900 dark:text-white uppercase tracking-tight hidden md:block">
