@@ -1,0 +1,29 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "lab-hero",
+      "description": "A modern physics laboratory with advanced equipment.",
+      "imageUrl": "https://picsum.photos/seed/physics1/1200/600",
+      "imageHint": "physics laboratory"
+    },
+    {
+      "id": "pendulum",
+      "description": "Scientific pendulum experiment setup.",
+      "imageUrl": "https://picsum.photos/seed/pendulum/600/400",
+      "imageHint": "pendulum experiment"
+    },
+    {
+      "id": "optics",
+      "description": "Optical lens and laser experiment.",
+      "imageUrl": "https://picsum.photos/seed/optics/600/400",
+      "imageHint": "optics laser"
+    },
+    {
+      "id": "circuit",
+      "description": "Electronic circuit board with components.",
+      "imageUrl": "https://picsum.photos/seed/electronics/600/400",
+      "imageHint": "electronic circuit"
+    }
+  ]
+}
