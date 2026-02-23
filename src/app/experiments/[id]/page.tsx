@@ -1,21 +1,20 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
-import { experiments, Experiment } from "@/lib/physics-data";
+import { useState, useMemo } from "react";
+import { experiments } from "@/lib/physics-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ObservationTable } from "@/components/ObservationTable";
 import { PhysicsGraph } from "@/components/PhysicsGraph";
-import { calculateMean, calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
+import { calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
 import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 
 export default function ExperimentPage() {
   const { id } = useParams();
-  const router = useRouter();
   const experiment = experiments.find((e) => e.id === id);
 
   const [observations, setObservations] = useState<any[]>([]);
@@ -32,51 +31,120 @@ export default function ExperimentPage() {
     );
   }
 
-  // Derived data for the graph
   const graphData: DataPoint[] = useMemo(() => {
     return observations
       .map((row) => {
         let x = 0, y = 0;
-        if (experiment.id === "bar-pendulum") {
-          x = parseFloat(row.l);
-          y = Math.pow(parseFloat(row.t10) / 10, 2);
-        } else if (experiment.id === "youngs-modulus") {
-          x = parseFloat(row.m);
-          y = parseFloat(row.depression);
-        } else if (experiment.id === "newtons-rings") {
-          x = parseFloat(row.n);
-          y = Math.pow(parseFloat(row.diameter), 2);
-        } else {
-          x = parseFloat(row.v);
-          y = parseFloat(row.i);
+        const val = (k: string) => parseFloat(row[k]) || 0;
+
+        switch (experiment.id) {
+          case "bar-pendulum":
+            x = val("l");
+            y = Math.pow(val("t20") / 20, 2);
+            break;
+          case "youngs-modulus":
+            x = val("m");
+            y = val("depression");
+            break;
+          case "rigidity-modulus":
+            x = val("m");
+            y = val("theta");
+            break;
+          case "surface-tension":
+            x = val("r");
+            y = val("h");
+            break;
+          case "sonometer":
+            x = val("l");
+            y = val("n");
+            break;
+          case "newtons-rings":
+            x = val("n");
+            y = Math.pow(val("diameter"), 2);
+            break;
+          case "laser-wavelength":
+            x = val("m");
+            const D = val("D");
+            const Y = val("y");
+            y = Y / Math.sqrt(Y * Y + D * D);
+            break;
+          case "rc-circuit":
+            x = val("t");
+            y = val("v");
+            break;
+          case "bjt-ce":
+          case "pn-junction":
+            x = val("v");
+            y = val("i");
+            break;
+          case "metre-bridge":
+            x = val("l1") / val("l2");
+            y = val("q");
+            break;
+          default:
+            x = val("v");
+            y = val("i");
         }
         return { x, y };
       })
-      .filter((p) => !isNaN(p.x) && !isNaN(p.y));
+      .filter((p) => !isNaN(p.x) && !isNaN(p.y) && isFinite(p.x) && isFinite(p.y));
   }, [observations, experiment]);
 
   const regression = calculateLinearRegression(graphData);
 
   const calculatedResult = useMemo(() => {
-    if (graphData.length < 2) return null;
+    if (graphData.length < 1 && experiment.id !== "metre-bridge") return null;
+    if (experiment.id === "metre-bridge" && observations.length > 0) {
+      const results = observations.map(o => (parseFloat(o.q) || 0) * (parseFloat(o.l1) || 0) / (parseFloat(o.l2) || 1));
+      return results.reduce((a, b) => a + b, 0) / results.length;
+    }
     
+    if (graphData.length < 2) return null;
+
     let result = 0;
-    if (experiment.id === "bar-pendulum") {
-      // g = 4π²L/T² -> T²/L = 1/g * 4π² -> slope = 4π²/g -> g = 4π²/slope
-      result = (4 * Math.PI * Math.PI) / regression.slope;
-    } else if (experiment.id === "newtons-rings") {
-      // D² = 4nRλ -> slope = 4Rλ -> λ = slope / 4R
-      // Assume R = 100cm (1000mm) for demonstration if not provided
-      const R = 1000; 
-      result = (regression.slope / (4 * R)) * 1e7; // Convert to Å
-    } else if (experiment.id === "youngs-modulus") {
-      // Y = MgL³ / 4bd³δ -> δ/M = slope -> Y = gL³ / (4bd³ * slope)
-      // Standard values for demonstration
-      const g = 981, L = 50, b = 2, d = 0.5;
-      result = (g * Math.pow(L, 3)) / (4 * b * Math.pow(d, 3) * regression.slope);
+    const g = 981;
+
+    switch (experiment.id) {
+      case "bar-pendulum":
+        result = (4 * Math.PI * Math.PI) / regression.slope;
+        break;
+      case "youngs-modulus":
+        const L_y = 50, b = 2, d = 0.5;
+        result = (g * Math.pow(L_y, 3)) / (4 * b * Math.pow(d, 3) * regression.slope);
+        break;
+      case "rigidity-modulus":
+        const r_wire = 0.05, d_cyl = 4, l_wire = 60;
+        result = (g * Math.pow(d_cyl, 4) * l_wire) / (Math.PI * Math.pow(r_wire, 4) * (regression.slope * 180 / Math.PI));
+        break;
+      case "surface-tension":
+        // T = r h ρ g / 2. If slope = h/r, T = r^2 * slope * ρ * g / 2 (Not linear in r)
+        // Usually we fix r and change h, or vice versa. Assume mean of (r*h*g)/2
+        const values = observations.map(o => (parseFloat(o.r) * parseFloat(o.h) * 1 * g) / 2);
+        result = values.reduce((a, b) => a + b, 0) / values.length;
+        break;
+      case "newtons-rings":
+        const R = 1000; 
+        result = (regression.slope / (4 * R)) * 1e7;
+        break;
+      case "laser-wavelength":
+        const grating_const = 1 / 6000; // 600 lines/mm
+        result = grating_const * regression.slope * 1e6; // to nm
+        break;
+      case "rc-circuit":
+        // Find t where V = 0.63 * Vmax
+        const Vmax = Math.max(...observations.map(o => parseFloat(o.v) || 0));
+        const target = 0.63 * Vmax;
+        const closest = observations.reduce((prev, curr) => 
+          Math.abs(parseFloat(curr.v) - target) < Math.abs(parseFloat(prev.v) - target) ? curr : prev
+        );
+        result = parseFloat(closest.t);
+        break;
+      case "bjt-ce":
+        result = 1 / regression.slope; // Resistance
+        break;
     }
     return result;
-  }, [experiment.id, regression, graphData]);
+  }, [experiment.id, regression, graphData, observations]);
 
   const error = useMemo(() => {
     if (calculatedResult === null || !experiment.standardValue) return null;
@@ -115,10 +183,12 @@ export default function ExperimentPage() {
                 <h1 className="text-3xl font-bold font-headline">{experiment.title}</h1>
                 <p className="text-muted-foreground">OUTR B.Tech Physics Laboratory Manual</p>
               </div>
-              <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 no-print">
-                <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1">Standard Value</p>
-                <p className="text-xl font-mono font-bold">{experiment.standardValue} <span className="text-sm font-normal">{experiment.unit}</span></p>
-              </div>
+              {experiment.standardValue && (
+                <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 no-print">
+                  <p className="text-xs uppercase tracking-wider font-bold text-primary mb-1">Standard Value</p>
+                  <p className="text-xl font-mono font-bold">{experiment.standardValue} <span className="text-sm font-normal">{experiment.unit}</span></p>
+                </div>
+              )}
             </div>
           </header>
 
@@ -134,18 +204,12 @@ export default function ExperimentPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle>Aim</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{experiment.aim}</p>
-                    </CardContent>
+                    <CardHeader><CardTitle>Aim</CardTitle></CardHeader>
+                    <CardContent><p>{experiment.aim}</p></CardContent>
                   </Card>
                   
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle>Theory</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Theory</CardTitle></CardHeader>
                     <CardContent className="prose prose-sm dark:prose-invert">
                       <p>{experiment.theory}</p>
                       <div className="bg-muted p-4 rounded-lg my-4 text-center">
@@ -157,9 +221,7 @@ export default function ExperimentPage() {
                 
                 <div className="space-y-6">
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle>Apparatus</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Apparatus</CardTitle></CardHeader>
                     <CardContent>
                       <ul className="list-disc pl-5 space-y-1">
                         {experiment.apparatus.map((item, i) => (
@@ -170,14 +232,13 @@ export default function ExperimentPage() {
                   </Card>
                   
                   <Card className="border-2 overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <CardTitle>Setup Diagram</CardTitle>
-                    </CardHeader>
+                    <CardHeader className="pb-2"><CardTitle>Setup Diagram</CardTitle></CardHeader>
                     <CardContent className="p-0">
                       <img 
                         src={`https://picsum.photos/seed/${experiment.id}/600/400`} 
                         alt="Experiment Setup" 
                         className="w-full aspect-video object-cover"
+                        data-ai-hint="physics setup"
                       />
                     </CardContent>
                   </Card>
@@ -229,17 +290,21 @@ export default function ExperimentPage() {
                       <div>
                         <p className="text-sm text-muted-foreground">Final Calculated Result</p>
                         <p className="text-3xl font-mono font-bold text-primary">
-                          {calculatedResult ? calculatedResult.toFixed(2) : "---"}
+                          {calculatedResult ? calculatedResult.toFixed(4) : "---"}
                           <span className="text-sm ml-1">{experiment.unit}</span>
                         </p>
                       </div>
-                      <hr />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Percentage Error</p>
-                        <p className={`text-2xl font-mono font-bold ${error && error < 5 ? "text-green-500" : "text-amber-500"}`}>
-                          {error ? `${error.toFixed(2)}%` : "---"}
-                        </p>
-                      </div>
+                      {error !== null && (
+                        <>
+                          <hr />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Percentage Error</p>
+                            <p className={`text-2xl font-mono font-bold ${error < 5 ? "text-green-500" : "text-amber-500"}`}>
+                              {error.toFixed(2)}%
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -318,12 +383,16 @@ export default function ExperimentPage() {
                         <p className="text-xl font-bold ml-4">
                           Observed Value = {calculatedResult ? calculatedResult.toFixed(4) : "__________"} {experiment.unit}
                         </p>
-                        <p className="text-xl font-bold ml-4">
-                          Standard Value = {experiment.standardValue} {experiment.unit}
-                        </p>
-                        <p className="text-xl font-bold ml-4">
-                          Percentage Error = {error ? error.toFixed(2) : "__________"}%
-                        </p>
+                        {experiment.standardValue && (
+                          <p className="text-xl font-bold ml-4">
+                            Standard Value = {experiment.standardValue} {experiment.unit}
+                          </p>
+                        )}
+                        {error !== null && (
+                          <p className="text-xl font-bold ml-4">
+                            Percentage Error = {error.toFixed(2)}%
+                          </p>
+                        )}
                       </div>
                     </section>
 
