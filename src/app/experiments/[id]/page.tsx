@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { experiments } from "@/lib/physics-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,11 +17,9 @@ export default function ExperimentPage() {
   const { id } = useParams();
   const experiment = experiments.find((e) => e.id === id);
 
-  // Store data for multiple tables: Record<tableId, rows[]>
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Initialize table data if not present
   useEffect(() => {
     if (experiment && Object.keys(tableData).length === 0) {
       const initial: Record<string, any[]> = {};
@@ -47,88 +45,37 @@ export default function ExperimentPage() {
     setTableData(prev => ({ ...prev, [tableId]: newData }));
   };
 
-  const graphData: DataPoint[] = useMemo(() => {
-    // Logic to select which table and columns to use for graph based on experiment ID
-    let currentData: any[] = [];
-    let xKey = "x", yKey = "y";
-
-    switch (experiment.id) {
-      case "bar-pendulum":
-        currentData = tableData["time-measurement"] || [];
-        xKey = "dist_cg";
-        yKey = "T";
-        break;
-      case "youngs-modulus":
-        currentData = tableData["depression"] || [];
-        xKey = "load";
-        yKey = "depression";
-        break;
-      case "rigidity-modulus":
-        currentData = tableData["twist"] || [];
-        xKey = "load";
-        yKey = "twist";
-        break;
-      case "surface-tension":
-        currentData = tableData["final-calc"] || [];
-        xKey = "r";
-        yKey = "h";
-        break;
-      case "sonometer":
-        currentData = tableData["const-weight"] || [];
-        xKey = "inv_l";
-        yKey = "freq";
-        break;
-      case "newtons-rings":
-        currentData = tableData["rings"] || [];
-        xKey = "ring_no";
-        yKey = "d2";
-        break;
-      case "laser-wavelength":
-        currentData = tableData["laser-obs"] || [];
-        xKey = "order";
-        yKey = "ym";
-        break;
-      case "rc-circuit":
-        currentData = tableData["rc-data"] || [];
-        xKey = "time";
-        yKey = "v_charge";
-        break;
-      case "bjt-ce":
-        currentData = tableData["output-char"] || [];
-        xKey = "vce";
-        yKey = "ic_150";
-        break;
-      case "metre-bridge":
-        currentData = tableData["resistance"] || [];
-        xKey = "l1";
-        yKey = "q_res";
-        break;
-      case "pn-junction":
-        currentData = tableData["pn-data"] || [];
-        xKey = "v_forward";
-        yKey = "i_forward";
-        break;
-    }
-
+  const getGraphData = (graphDef: any): DataPoint[] => {
+    const currentData = tableData[graphDef.tableId] || [];
     return currentData
       .map((row) => ({
-        x: parseFloat(row[xKey]) || 0,
-        y: parseFloat(row[yKey]) || 0
+        x: parseFloat(row[graphDef.xKey]) || 0,
+        y: parseFloat(row[graphDef.yKey]) || 0
       }))
       .filter((p) => !isNaN(p.x) && !isNaN(p.y) && isFinite(p.x) && isFinite(p.y));
-  }, [tableData, experiment]);
-
-  const regression = calculateLinearRegression(graphData);
+  };
 
   const calculatedResult = useMemo(() => {
-    if (graphData.length < 1) return null;
+    const mainGraph = experiment.graphs[0];
+    if (!mainGraph) return null;
     
+    const data = getGraphData(mainGraph);
+    if (data.length < 2) return null;
+    
+    const regression = calculateLinearRegression(data);
     let result = 0;
     const g = 981;
 
     switch (experiment.id) {
       case "bar-pendulum":
-        result = (4 * Math.PI * Math.PI) / (regression.slope || 1);
+        // Using L vs T² slope
+        const lT2Data = getGraphData(experiment.graphs[1]);
+        if (lT2Data.length >= 2) {
+          const regL_T2 = calculateLinearRegression(lT2Data);
+          result = (4 * Math.PI * Math.PI) * (regL_T2.slope || 1);
+        } else {
+          result = 0;
+        }
         break;
       case "youngs-modulus":
         const L_y = 50, b = 2, d = 0.5;
@@ -144,11 +91,11 @@ export default function ExperimentPage() {
         result = tValues.reduce((a, b) => a + b, 0) / (tValues.length || 1);
         break;
       case "newtons-rings":
-        const R = 1000; 
-        result = (regression.slope / (4 * R)) * 1e7;
+        const R_optics = 1000; 
+        result = (regression.slope / (4 * R_optics)) * 1e7;
         break;
       case "laser-wavelength":
-        result = 6328;
+        result = 6328; // placeholder
         break;
       case "metre-bridge":
         const mbData = tableData["resistance"] || [];
@@ -159,7 +106,7 @@ export default function ExperimentPage() {
         result = regression.slope;
     }
     return result;
-  }, [experiment.id, regression, graphData, tableData]);
+  }, [experiment.id, tableData, experiment.graphs]);
 
   const error = useMemo(() => {
     if (calculatedResult === null || !experiment.standardValue) return null;
@@ -268,52 +215,44 @@ export default function ExperimentPage() {
             </TabsContent>
 
             <TabsContent value="analysis" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {experiment.graphs.map((graphDef) => (
                   <PhysicsGraph 
-                    data={graphData} 
-                    title={`${experiment.yLabel} vs ${experiment.xLabel}`}
-                    xLabel={experiment.xLabel}
-                    yLabel={experiment.yLabel}
-                    xUnit={experiment.xUnit}
-                    yUnit={experiment.yUnit}
+                    key={graphDef.id}
+                    data={getGraphData(graphDef)} 
+                    title={graphDef.title}
+                    xLabel={graphDef.xLabel}
+                    yLabel={graphDef.yLabel}
+                    xUnit={graphDef.xUnit}
+                    yUnit={graphDef.yUnit}
                   />
-                </div>
-                <div className="space-y-6">
-                  <Card className="border-2 border-primary/20 bg-primary/5">
-                    <CardHeader>
-                      <CardTitle className="text-primary flex items-center gap-2">
-                        <Calculator className="h-5 w-5" /> Calculations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Determined Slope</p>
-                        <p className="text-2xl font-mono font-bold">{regression.slope.toFixed(6)}</p>
-                      </div>
-                      <hr />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Final Calculated Result</p>
-                        <p className="text-3xl font-mono font-bold text-primary">
-                          {calculatedResult ? calculatedResult.toFixed(4) : "---"}
-                          <span className="text-sm ml-1">{experiment.unit}</span>
-                        </p>
-                      </div>
-                      {error !== null && (
-                        <>
-                          <hr />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Percentage Error</p>
-                            <p className={`text-2xl font-mono font-bold ${error < 5 ? "text-green-500" : "text-amber-500"}`}>
-                              {error.toFixed(2)}%
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                ))}
               </div>
+              
+              <Card className="border-2 border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="text-primary flex items-center gap-2">
+                    <Calculator className="h-5 w-5" /> Results Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Final Calculated Result</p>
+                    <p className="text-3xl font-mono font-bold text-primary">
+                      {calculatedResult ? calculatedResult.toFixed(4) : "---"}
+                      <span className="text-sm ml-1">{experiment.unit}</span>
+                    </p>
+                  </div>
+                  {error !== null && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Percentage Error</p>
+                      <p className={`text-3xl font-mono font-bold ${error < 5 ? "text-green-500" : "text-amber-500"}`}>
+                        {error.toFixed(2)}%
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="report" className="space-y-8">

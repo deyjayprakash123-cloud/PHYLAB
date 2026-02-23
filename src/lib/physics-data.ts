@@ -5,6 +5,18 @@ export type TableDefinition = {
   columns: TableHeader[];
 };
 
+export type GraphDefinition = {
+  id: string;
+  title: string;
+  tableId: string;
+  xKey: string;
+  yKey: string;
+  xLabel: string;
+  yLabel: string;
+  xUnit: string;
+  yUnit: string;
+};
+
 export type Experiment = {
   id: string;
   title: string;
@@ -15,11 +27,8 @@ export type Experiment = {
   formula: string;
   standardValue?: number;
   unit: string;
-  xLabel: string;
-  yLabel: string;
-  xUnit: string;
-  yUnit: string;
   tables: TableDefinition[];
+  graphs: GraphDefinition[];
 };
 
 export const experiments: Experiment[] = [
@@ -33,10 +42,6 @@ export const experiments: Experiment[] = [
     formula: "g = 4π²L/T²",
     standardValue: 981,
     unit: "cm/s²",
-    xLabel: "Length",
-    yLabel: "Time Period Squared",
-    xUnit: "cm",
-    yUnit: "s²",
     tables: [
       {
         id: "time-measurement",
@@ -62,6 +67,30 @@ export const experiments: Experiment[] = [
         ]
       }
     ],
+    graphs: [
+      {
+        id: "l-vs-t",
+        title: "Distance from C.G (L) vs Time Period (T)",
+        tableId: "time-measurement",
+        xKey: "dist_cg",
+        yKey: "T",
+        xLabel: "L",
+        yLabel: "T",
+        xUnit: "cm",
+        yUnit: "s"
+      },
+      {
+        id: "l-vs-t2",
+        title: "Equivalent Length (L) vs T²",
+        tableId: "eq-len-calc",
+        xKey: "eq_len",
+        yKey: "T_period", // Note: Usually L vs T^2, we'll map this in page
+        xLabel: "L",
+        yLabel: "T²",
+        xUnit: "cm",
+        yUnit: "s²"
+      }
+    ]
   },
   {
     id: "youngs-modulus",
@@ -73,10 +102,6 @@ export const experiments: Experiment[] = [
     formula: "Y = (M * g * L³) / (4 * b * d³ * δ)",
     standardValue: 2e12,
     unit: "dyne/cm²",
-    xLabel: "Mass",
-    yLabel: "Depression",
-    xUnit: "g",
-    yUnit: "cm",
     tables: [
       {
         id: "thickness",
@@ -108,16 +133,27 @@ export const experiments: Experiment[] = [
         columns: [
           { key: "load", label: "Load", unit: "g" },
           { key: "msr_inc", label: "MSR (Inc)", unit: "cm" },
-          { key: "vc_inc", label: "VC (Inc)" },
-          { key: "total_inc", label: "Total (a)", unit: "cm" },
+          { key: "total_inc", label: "Total (Inc)", unit: "cm" },
           { key: "msr_dec", label: "MSR (Dec)", unit: "cm" },
-          { key: "vc_dec", label: "VC (Dec)" },
-          { key: "total_dec", label: "Total (b)", unit: "cm" },
-          { key: "mean", label: "Mean (a+b)/2", unit: "cm" },
+          { key: "total_dec", label: "Total (Dec)", unit: "cm" },
+          { key: "mean", label: "Mean", unit: "cm" },
           { key: "depression", label: "Depression δ", unit: "cm" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "load-vs-dep",
+        title: "Load (M) vs Depression (δ)",
+        tableId: "depression",
+        xKey: "load",
+        yKey: "depression",
+        xLabel: "Load",
+        yLabel: "δ",
+        xUnit: "g",
+        yUnit: "cm"
+      }
+    ]
   },
   {
     id: "rigidity-modulus",
@@ -128,14 +164,10 @@ export const experiments: Experiment[] = [
     theory: "Rigidity modulus η = (g * d^4 * l) / (π * r^4 * θ), where θ is twist angle.",
     formula: "η = (g * d^4 * l) / (π * r^4 * θ)",
     unit: "dyne/cm²",
-    xLabel: "Load",
-    yLabel: "Twist Angle",
-    xUnit: "g",
-    yUnit: "deg",
     tables: [
       {
         id: "radius",
-        label: "Table 1: Radius of Metallic Bar (Screw Gauge)",
+        label: "Table 1: Radius of Metallic Bar",
         columns: [
           { key: "obs_no", label: "Obs No" },
           { key: "psr", label: "PSR" },
@@ -145,28 +177,36 @@ export const experiments: Experiment[] = [
       },
       {
         id: "diameter",
-        label: "Table 2: Diameter of Cylinder (Vernier Caliper)",
+        label: "Table 2: Diameter of Cylinder",
         columns: [
           { key: "obs_no", label: "Obs No" },
           { key: "msr", label: "MSR" },
-          { key: "vsr", label: "VSR" },
           { key: "total", label: "Total", unit: "cm" },
         ]
       },
       {
         id: "twist",
-        label: "Table 3: Twist Angle (Scale Measurement)",
+        label: "Table 3: Twist Angle",
         columns: [
           { key: "load", label: "Load", unit: "kg" },
-          { key: "end1_inc", label: "End I (Inc)" },
-          { key: "end2_inc", label: "End II (Inc)" },
-          { key: "end1_dec", label: "End I (Dec)" },
-          { key: "end2_dec", label: "End II (Dec)" },
-          { key: "mean_angle", label: "Mean Angle" },
+          { key: "mean_angle", label: "Mean Angle", unit: "deg" },
           { key: "twist", label: "Twist θ", unit: "deg" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "load-vs-twist",
+        title: "Load (M) vs Twist (θ)",
+        tableId: "twist",
+        xKey: "load",
+        yKey: "twist",
+        xLabel: "Load",
+        yLabel: "θ",
+        xUnit: "kg",
+        yUnit: "deg"
+      }
+    ]
   },
   {
     id: "surface-tension",
@@ -178,18 +218,12 @@ export const experiments: Experiment[] = [
     formula: "T = (r * h * ρ * g) / 2",
     standardValue: 72,
     unit: "dyne/cm",
-    xLabel: "Bore Radius",
-    yLabel: "Height of Rise",
-    xUnit: "cm",
-    yUnit: "cm",
     tables: [
       {
         id: "height",
         label: "Table 1: Height Measurement",
         columns: [
           { key: "tube_no", label: "Tube No" },
-          { key: "total_r1", label: "Total R1 (Meniscus)" },
-          { key: "total_r", label: "Total R (Needle)" },
           { key: "h", label: "h = R1 - R", unit: "cm" },
         ]
       },
@@ -198,8 +232,6 @@ export const experiments: Experiment[] = [
         label: "Table 2: Diameter Measurement",
         columns: [
           { key: "tube_no", label: "Tube No" },
-          { key: "d1", label: "D1 (LHS-RHS)", unit: "cm" },
-          { key: "d2", label: "D2 (Lower-Upper)", unit: "cm" },
           { key: "mean_d", label: "Mean D", unit: "cm" },
         ]
       },
@@ -214,6 +246,19 @@ export const experiments: Experiment[] = [
         ]
       }
     ],
+    graphs: [
+      {
+        id: "r-vs-h",
+        title: "Radius (r) vs Height (h)",
+        tableId: "final-calc",
+        xKey: "r",
+        yKey: "h",
+        xLabel: "r",
+        yLabel: "h",
+        xUnit: "cm",
+        yUnit: "cm"
+      }
+    ]
   },
   {
     id: "sonometer",
@@ -224,38 +269,50 @@ export const experiments: Experiment[] = [
     theory: "Frequency n = (1/2l)√(T/m).",
     formula: "n ∝ 1/l and n ∝ √T",
     unit: "Hz",
-    xLabel: "Length",
-    yLabel: "Frequency",
-    xUnit: "cm",
-    yUnit: "Hz",
     tables: [
       {
         id: "const-weight",
         label: "Table 1: Constant Weight",
         columns: [
-          { key: "obs_no", label: "Obs No" },
-          { key: "freq", label: "Frequency", unit: "Hz" },
-          { key: "l_inc", label: "l (Inc)", unit: "cm" },
-          { key: "l_dec", label: "l (Dec)", unit: "cm" },
-          { key: "mean_l", label: "Mean l", unit: "cm" },
-          { key: "inv_l", label: "1/l" },
-          { key: "nl", label: "n × l" },
+          { key: "freq", label: "n", unit: "Hz" },
+          { key: "mean_l", label: "l", unit: "cm" },
+          { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
         ]
       },
       {
         id: "const-freq",
         label: "Table 2: Constant Frequency",
         columns: [
-          { key: "obs_no", label: "Obs No" },
-          { key: "tension", label: "Tension", unit: "N" },
-          { key: "l_inc", label: "l (Inc)", unit: "cm" },
-          { key: "l_dec", label: "l (Dec)", unit: "cm" },
-          { key: "mean_l", label: "Mean l", unit: "cm" },
-          { key: "l2", label: "l²" },
-          { key: "T_l2", label: "T/l²" },
+          { key: "tension", label: "T", unit: "N" },
+          { key: "mean_l", label: "l", unit: "cm" },
+          { key: "l2", label: "l²", unit: "cm²" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "n-vs-invl",
+        title: "Frequency (n) vs 1/l",
+        tableId: "const-weight",
+        xKey: "inv_l",
+        yKey: "freq",
+        xLabel: "1/l",
+        yLabel: "n",
+        xUnit: "cm⁻¹",
+        yUnit: "Hz"
+      },
+      {
+        id: "t-vs-l2",
+        title: "Tension (T) vs l²",
+        tableId: "const-freq",
+        xKey: "l2",
+        yKey: "tension",
+        xLabel: "l²",
+        yLabel: "T",
+        xUnit: "cm²",
+        yUnit: "N"
+      }
+    ]
   },
   {
     id: "newtons-rings",
@@ -267,24 +324,30 @@ export const experiments: Experiment[] = [
     formula: "λ = (D²m - D²n) / [4R(m - n)]",
     standardValue: 5890,
     unit: "Å",
-    xLabel: "Ring Number",
-    yLabel: "Diameter Squared",
-    xUnit: "n",
-    yUnit: "mm²",
     tables: [
       {
         id: "rings",
         label: "Observation Table: Ring Diameters",
         columns: [
-          { key: "ring_no", label: "Ring No" },
-          { key: "icsr", label: "ICSR" },
-          { key: "fcsr", label: "FCSR" },
-          { key: "diff", label: "Diff (I-F)" },
-          { key: "diameter", label: "Diameter (D)", unit: "mm" },
+          { key: "ring_no", label: "n" },
+          { key: "diameter", label: "D", unit: "mm" },
           { key: "d2", label: "D²", unit: "mm²" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "n-vs-d2",
+        title: "Ring Number (n) vs D²",
+        tableId: "rings",
+        xKey: "ring_no",
+        yKey: "d2",
+        xLabel: "n",
+        yLabel: "D²",
+        xUnit: "",
+        yUnit: "mm²"
+      }
+    ]
   },
   {
     id: "laser-wavelength",
@@ -295,26 +358,31 @@ export const experiments: Experiment[] = [
     theory: "mλ = (a+b)sinθ ≈ (a+b)y/√(y²+D²).",
     formula: "λ = ((a+b) * y) / (m * √(y² + D²))",
     unit: "Å",
-    xLabel: "Order",
-    yLabel: "Deflection Ratio",
-    xUnit: "m",
-    yUnit: "ratio",
     tables: [
       {
         id: "laser-obs",
         label: "Observation Table",
         columns: [
-          { key: "sl_no", label: "Sl No" },
-          { key: "lines_cm", label: "Lines/cm" },
-          { key: "grating_elem", label: "Grating Element (a+b)" },
-          { key: "order", label: "Order (m)" },
-          { key: "ym", label: "ym", unit: "cm" },
-          { key: "D", label: "D", unit: "cm" },
+          { key: "order", label: "m" },
+          { key: "ym", label: "y", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
           { key: "lambda", label: "λ", unit: "Å" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "m-vs-sintheta",
+        title: "Order (m) vs sinθ",
+        tableId: "laser-obs",
+        xKey: "order",
+        yKey: "sin_theta",
+        xLabel: "m",
+        yLabel: "sinθ",
+        xUnit: "",
+        yUnit: ""
+      }
+    ]
   },
   {
     id: "rc-circuit",
@@ -325,21 +393,41 @@ export const experiments: Experiment[] = [
     theory: "Time constant τ = RC. At τ, V = 0.63 Vmax during charging.",
     formula: "τ = RC",
     unit: "s",
-    xLabel: "Time",
-    yLabel: "Voltage",
-    xUnit: "s",
-    yUnit: "V",
     tables: [
       {
         id: "rc-data",
         label: "Charging & Discharging Table",
         columns: [
           { key: "time", label: "Time", unit: "s" },
-          { key: "v_charge", label: "Charging Voltage", unit: "V" },
-          { key: "v_discharge", label: "Discharging Voltage", unit: "V" },
+          { key: "v_charge", label: "Vc", unit: "V" },
+          { key: "v_discharge", label: "Vd", unit: "V" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "time-vs-vc",
+        title: "Time vs Charging Voltage (Vc)",
+        tableId: "rc-data",
+        xKey: "time",
+        yKey: "v_charge",
+        xLabel: "t",
+        yLabel: "Vc",
+        xUnit: "s",
+        yUnit: "V"
+      },
+      {
+        id: "time-vs-vd",
+        title: "Time vs Discharging Voltage (Vd)",
+        tableId: "rc-data",
+        xKey: "time",
+        yKey: "v_discharge",
+        xLabel: "t",
+        yLabel: "Vd",
+        xUnit: "s",
+        yUnit: "V"
+      }
+    ]
   },
   {
     id: "bjt-ce",
@@ -350,19 +438,13 @@ export const experiments: Experiment[] = [
     theory: "Input resistance Ri = ΔVBE / ΔIB, Output resistance Ro = ΔVCE / ΔIC.",
     formula: "R = ΔV / ΔI",
     unit: "Ω",
-    xLabel: "Voltage",
-    yLabel: "Current",
-    xUnit: "V",
-    yUnit: "mA",
     tables: [
       {
         id: "input-char",
         label: "Table 1: Input Characteristics",
         columns: [
           { key: "vbe", label: "VBE", unit: "V" },
-          { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
-          { key: "ib_4v", label: "IB at 4V", unit: "µA" },
-          { key: "ib_8v", label: "IB at 8V", unit: "µA" },
+          { key: "ib_1v", label: "IB (1V)", unit: "µA" },
         ]
       },
       {
@@ -370,12 +452,34 @@ export const experiments: Experiment[] = [
         label: "Table 2: Output Characteristics",
         columns: [
           { key: "vce", label: "VCE", unit: "V" },
-          { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
-          { key: "ic_150", label: "IC at 150µA", unit: "mA" },
-          { key: "ic_175", label: "IC at 175µA", unit: "mA" },
+          { key: "ic_150", label: "IC (150µA)", unit: "mA" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "vbe-vs-ib",
+        title: "Input Characteristics (VBE vs IB)",
+        tableId: "input-char",
+        xKey: "vbe",
+        yKey: "ib_1v",
+        xLabel: "VBE",
+        yLabel: "IB",
+        xUnit: "V",
+        yUnit: "µA"
+      },
+      {
+        id: "vce-vs-ic",
+        title: "Output Characteristics (VCE vs IC)",
+        tableId: "output-char",
+        xKey: "vce",
+        yKey: "ic_150",
+        xLabel: "VCE",
+        yLabel: "IC",
+        xUnit: "V",
+        yUnit: "mA"
+      }
+    ]
   },
   {
     id: "metre-bridge",
@@ -386,22 +490,30 @@ export const experiments: Experiment[] = [
     theory: "P/Q = l1/l2 -> P = Q(l1/l2).",
     formula: "P = Q * (l1 / l2)",
     unit: "Ω",
-    xLabel: "Length l1",
-    yLabel: "Resistance Q",
-    xUnit: "cm",
-    yUnit: "Ω",
     tables: [
       {
         id: "resistance",
         label: "Observation Table",
         columns: [
-          { key: "p_res", label: "Resistance P", unit: "Ω" },
+          { key: "p_res", label: "P", unit: "Ω" },
           { key: "l1", label: "l1", unit: "cm" },
-          { key: "l2", label: "l2 (100-l1)", unit: "cm" },
-          { key: "q_res", label: "Q = (l1/l2)×P", unit: "Ω" },
+          { key: "q_res", label: "Q", unit: "Ω" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "l1-vs-q",
+        title: "Length (l1) vs Resistance (Q)",
+        tableId: "resistance",
+        xKey: "l1",
+        yKey: "q_res",
+        xLabel: "l1",
+        yLabel: "Q",
+        xUnit: "cm",
+        yUnit: "Ω"
+      }
+    ]
   },
   {
     id: "pn-junction",
@@ -412,22 +524,42 @@ export const experiments: Experiment[] = [
     theory: "Current follows exponential relationship in forward bias.",
     formula: "I = Is * (e^(V/ηVt) - 1)",
     unit: "mA",
-    xLabel: "Voltage",
-    yLabel: "Current",
-    xUnit: "V",
-    yUnit: "mA",
     tables: [
       {
         id: "pn-data",
         label: "V-I Observation Table",
         columns: [
-          { key: "v_forward", label: "Forward Voltage", unit: "V" },
-          { key: "i_forward", label: "Forward Current", unit: "mA" },
-          { key: "v_reverse", label: "Reverse Voltage", unit: "V" },
-          { key: "i_reverse", label: "Reverse Current", unit: "µA" },
+          { key: "v_forward", label: "Vf", unit: "V" },
+          { key: "i_forward", label: "If", unit: "mA" },
+          { key: "v_reverse", label: "Vr", unit: "V" },
+          { key: "i_reverse", label: "Ir", unit: "µA" },
         ]
       }
     ],
+    graphs: [
+      {
+        id: "v-vs-i-forward",
+        title: "Forward Characteristics (Vf vs If)",
+        tableId: "pn-data",
+        xKey: "v_forward",
+        yKey: "i_forward",
+        xLabel: "Vf",
+        yLabel: "If",
+        xUnit: "V",
+        yUnit: "mA"
+      },
+      {
+        id: "v-vs-i-reverse",
+        title: "Reverse Characteristics (Vr vs Ir)",
+        tableId: "pn-data",
+        xKey: "v_reverse",
+        yKey: "i_reverse",
+        xLabel: "Vr",
+        yLabel: "Ir",
+        xUnit: "V",
+        yUnit: "µA"
+      }
+    ]
   }
 ];
 
