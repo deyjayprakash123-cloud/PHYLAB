@@ -20,6 +20,11 @@ export type GraphDefinition = {
   multiSeries?: { key: string; label: string; color: string }[];
 };
 
+export type Question = {
+  q: string;
+  a: string;
+};
+
 export type Experiment = {
   id: string;
   title: string;
@@ -32,6 +37,7 @@ export type Experiment = {
   unit: string;
   tables: TableDefinition[];
   graphs: GraphDefinition[];
+  questions: Question[];
 };
 
 export const experiments: Experiment[] = [
@@ -82,6 +88,16 @@ export const experiments: Experiment[] = [
         yUnit: "cm",
         equationFormat: "L = mT² + c"
       }
+    ],
+    questions: [
+      { q: "What is a compound pendulum?", a: "A rigid body oscillating about a horizontal axis is called a compound pendulum." },
+      { q: "What is equivalent length?", a: "Distance between centre of suspension and centre of oscillation." },
+      { q: "What is time period?", a: "Time taken for one complete oscillation." },
+      { q: "Why take 20 oscillations?", a: "To reduce error in time measurement." },
+      { q: "Formula for g?", a: "g = 4π²L/T²" },
+      { q: "Standard value of g?", a: "981 cm/s² (or 9.8 m/s²)." },
+      { q: "Why small amplitude is preferred?", a: "Because formula is valid only for small angles." },
+      { q: "What is radius of gyration?", a: "Distance from axis where entire mass can be assumed concentrated." }
     ]
   },
   {
@@ -143,6 +159,16 @@ export const experiments: Experiment[] = [
         yUnit: "gm",
         equationFormat: "M = mδ + c"
       }
+    ],
+    questions: [
+      { q: "What is Young’s modulus?", a: "Ratio of stress to strain within elastic limit." },
+      { q: "What is stress?", a: "Force per unit area." },
+      { q: "What is strain?", a: "Change in dimension / original dimension." },
+      { q: "State Hooke’s Law.", a: "Stress is directly proportional to strain within elastic limit." },
+      { q: "Unit of Young’s modulus?", a: "N/m² or dyne/cm²." },
+      { q: "Why load applied at center?", a: "To get uniform bending." },
+      { q: "What happens beyond elastic limit?", a: "Material deforms permanently." },
+      { q: "What is bending moment?", a: "Turning effect produced by applied load." }
     ]
   },
   {
@@ -193,6 +219,15 @@ export const experiments: Experiment[] = [
         xUnit: "deg",
         yUnit: "kg"
       }
+    ],
+    questions: [
+      { q: "What is rigidity modulus?", a: "Ratio of shear stress to shear strain." },
+      { q: "What is torsion?", a: "Twisting of a wire due to applied torque." },
+      { q: "Define torque.", a: "Product of force and perpendicular distance." },
+      { q: "Unit of rigidity modulus?", a: "N/m²." },
+      { q: "Why three scales used?", a: "To improve accuracy." },
+      { q: "Why small twist preferred?", a: "To satisfy Hooke’s law." },
+      { q: "Difference between Young’s and rigidity modulus?", a: "Young’s deals with longitudinal stress, rigidity with shear stress." }
     ]
   },
   {
@@ -229,6 +264,15 @@ export const experiments: Experiment[] = [
         xUnit: "cm⁻¹",
         yUnit: "cm"
       }
+    ],
+    questions: [
+      { q: "What is surface tension?", a: "Force per unit length acting along surface of liquid." },
+      { q: "What is capillary rise?", a: "Rise of liquid in narrow tube." },
+      { q: "Why water rises in glass?", a: "Adhesion force > cohesion force." },
+      { q: "Unit of surface tension?", a: "N/m or dyne/cm." },
+      { q: "Why cosθ ≈ 1?", a: "Because angle of contact for water is nearly zero." },
+      { q: "Why mercury shows depression?", a: "Cohesion > adhesion." },
+      { q: "Effect of temperature?", a: "Surface tension decreases with increase in temperature." }
     ]
   },
   {
@@ -286,6 +330,15 @@ export const experiments: Experiment[] = [
         xUnit: "√N",
         yUnit: "Hz"
       }
+    ],
+    questions: [
+      { q: "What is transverse wave?", a: "Wave in which particles vibrate perpendicular to direction of motion." },
+      { q: "Define node.", a: "Point of zero displacement." },
+      { q: "Define antinode.", a: "Point of maximum displacement." },
+      { q: "Law of length?", a: "n ∝ 1/l." },
+      { q: "Law of tension?", a: "n ∝ √T." },
+      { q: "What is resonance?", a: "When frequency of source equals natural frequency." },
+      { q: "What is fundamental frequency?", a: "Lowest frequency of vibration." }
     ]
   },
   {
@@ -322,6 +375,15 @@ export const experiments: Experiment[] = [
         yUnit: "cm²",
         equationFormat: "D² = mn + c"
       }
+    ],
+    questions: [
+      { q: "What is interference?", a: "Superposition of two light waves." },
+      { q: "Why rings are circular?", a: "Because air film thickness is circular." },
+      { q: "Why central spot dark?", a: "Due to phase change on reflection." },
+      { q: "Why sodium light used?", a: "It is monochromatic." },
+      { q: "Formula for wavelength?", a: "λ = (D²m - D²n) / [4R(m - n)]" },
+      { q: "What is coherence?", a: "Constant phase difference between waves." },
+      { q: "What happens with white light?", a: "Colored rings are formed." }
     ]
   },
   {
@@ -359,6 +421,14 @@ export const experiments: Experiment[] = [
         xUnit: "",
         yUnit: ""
       }
+    ],
+    questions: [
+      { q: "What is LASER?", a: "Light Amplification by Stimulated Emission of Radiation." },
+      { q: "What is diffraction?", a: "Bending of light around edges." },
+      { q: "Grating equation?", a: "mλ = d sinθ" },
+      { q: "What is order of spectrum?", a: "Position number of bright fringe." },
+      { q: "Why LASER preferred?", a: "Highly monochromatic and coherent." },
+      { q: "What is zero order?", a: "Central bright spot." }
     ]
   },
   {
@@ -406,6 +476,14 @@ export const experiments: Experiment[] = [
         yUnit: "V",
         type: "monotone"
       }
+    ],
+    questions: [
+      { q: "What is capacitor?", a: "Device that stores electric charge." },
+      { q: "What is time constant?", a: "Time to reach 63% of final voltage." },
+      { q: "Formula of time constant?", a: "τ = RC" },
+      { q: "Why exponential curve formed?", a: "Because charging follows exponential law." },
+      { q: "What happens if R increases?", a: "Time constant increases." },
+      { q: "What is dielectric?", a: "Insulating material between plates." }
     ]
   },
   {
@@ -474,6 +552,14 @@ export const experiments: Experiment[] = [
           { key: "ic_175", label: "IB = 175µA", color: "#10b981" }
         ]
       }
+    ],
+    questions: [
+      { q: "What is transistor?", a: "Semiconductor device used for amplification." },
+      { q: "What are three regions?", a: "Emitter, Base, Collector." },
+      { q: "Why base is thin?", a: "To allow maximum carriers to pass." },
+      { q: "Define current gain (β).", a: "β = Ic / Ib." },
+      { q: "What is active region?", a: "Region where transistor amplifies." },
+      { q: "Why CE configuration popular?", a: "High gain and moderate input resistance." }
     ]
   },
   {
@@ -510,6 +596,13 @@ export const experiments: Experiment[] = [
         xUnit: "cm",
         yUnit: "cm"
       }
+    ],
+    questions: [
+      { q: "What principle used?", a: "Wheatstone bridge principle." },
+      { q: "What is balancing length?", a: "Length at which galvanometer shows zero deflection." },
+      { q: "Formula?", a: "P/Q = l1/l2" },
+      { q: "Why wire must be uniform?", a: "For uniform resistance per unit length." },
+      { q: "What is null point?", a: "Point of zero current in galvanometer." }
     ]
   },
   {
@@ -565,6 +658,14 @@ export const experiments: Experiment[] = [
         yUnit: "µA",
         type: "monotone"
       }
+    ],
+    questions: [
+      { q: "What is P-type semiconductor?", a: "Semiconductor with excess holes." },
+      { q: "What is N-type semiconductor?", a: "Semiconductor with excess electrons." },
+      { q: "What is depletion region?", a: "Region with no free charge carriers." },
+      { q: "What is knee voltage?", a: "Voltage where current increases rapidly." },
+      { q: "What is breakdown voltage?", a: "Voltage at which reverse current increases suddenly." },
+      { q: "What is rectifier?", a: "Device converting AC to DC." }
     ]
   }
 ];

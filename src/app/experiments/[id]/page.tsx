@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ObservationTable } from "@/components/ObservationTable";
 import { PhysicsGraph } from "@/components/PhysicsGraph";
 import { calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
-import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText } from "lucide-react";
+import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, MessageSquareQuote } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function ExperimentPage() {
   const { id } = useParams();
@@ -78,46 +79,35 @@ export default function ExperimentPage() {
 
     switch (experiment.id) {
       case "bar-pendulum":
-        // g = 4π² * slope where slope = L/T²
         result = (4 * Math.PI * Math.PI) * (regression.slope || 0);
         break;
       case "youngs-modulus":
-        // Y = (g * L^3 / (4 * b * d^3)) * slope where slope = M/δ
-        // Assuming manual input of constants L, b, d from other tables or defaults
         const L_y = 50, b_y = 2, d_y = 0.5;
         result = (g * Math.pow(L_y, 3) * regression.slope) / (4 * b_y * Math.pow(d_y, 3));
         break;
       case "rigidity-modulus":
-        // η = (g * d^4 * l / (π * r^4)) * (1/slope) where slope = θ/M
         const l_wire = 60, r_wire = 0.05, d_cyl = 4;
         const inv_slope = 1 / (regression.slope || 1);
         result = (g * Math.pow(d_cyl, 4) * l_wire * inv_slope) / (Math.PI * Math.pow(r_wire, 4));
         break;
       case "surface-tension":
-        // T = (r * h * ρ * g) / 2
         const surfData = tableData['final-calc'] || [];
         if (surfData.length === 0) return null;
         const means = surfData.map(row => (parseFloat(row.h) * parseFloat(row.r) * 1 * g) / 2);
         result = means.reduce((a, b) => a + b, 0) / means.length;
         break;
       case "sonometer":
-        // Sonometer results are verification based. 
-        // Returning frequency for comparison.
         result = regression.slope; 
         break;
       case "newtons-rings":
-        // λ = slope / 4R. Standard R = 100 cm
         const R_opt = 100;
-        result = (regression.slope / (4 * R_opt)) * 1e8; // To Å
+        result = (regression.slope / (4 * R_opt)) * 1e8; 
         break;
       case "laser-wavelength":
-        // λ = (a+b)sinθ / m. Here slope is sinθ/m
-        const grating_element = 1/600; // Example
-        result = regression.slope * grating_element * 1e8; // To Å
+        const grating_element = 1/600; 
+        result = regression.slope * grating_element * 1e8; 
         break;
       case "rc-circuit":
-        // τ_exp = time at 63% charging. From data or curve fitting.
-        // Simplified: use graph points to find t where V ≈ 0.63 Vmax
         const rcData = tableData['rc-data'] || [];
         if (rcData.length === 0) return null;
         const maxV = Math.max(...rcData.map(r => parseFloat(r.v_charge) || 0));
@@ -128,17 +118,13 @@ export default function ExperimentPage() {
         result = parseFloat(closest.time) || 0;
         break;
       case "metre-bridge":
-        // P = Q * (l1/l2)
         const bridgeData = tableData['resistance'] || [];
         if (bridgeData.length === 0) return null;
         const pValues = bridgeData.map(row => parseFloat(row.calc_p) || 0).filter(v => v > 0);
         result = pValues.reduce((a, b) => a + b, 0) / (pValues.length || 1);
         break;
       case "pn-junction":
-        // Knee voltage estimation
-        const pnData = tableData['forward-bias'] || [];
-        if (pnData.length < 3) return 0.7;
-        result = 0.7; // Standard representation
+        result = 0.7; 
         break;
       default:
         result = regression.slope;
@@ -193,26 +179,27 @@ export default function ExperimentPage() {
           </header>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl no-print bg-slate-200/50 dark:bg-slate-900 p-1 rounded-xl">
+            <TabsList className="grid grid-cols-5 w-full max-w-3xl no-print bg-slate-200/50 dark:bg-slate-900 p-1 rounded-xl">
               <TabsTrigger value="overview" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><Info className="h-4 w-4" /> Overview</TabsTrigger>
               <TabsTrigger value="observations" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><Calculator className="h-4 w-4" /> Observations</TabsTrigger>
               <TabsTrigger value="analysis" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><LineChart className="h-4 w-4" /> Graphs</TabsTrigger>
+              <TabsTrigger value="questions" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><HelpCircle className="h-4 w-4" /> Viva Q&A</TabsTrigger>
               <TabsTrigger value="report" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><FileText className="h-4 w-4" /> Final Report</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <TabsContent value="overview" className="space-y-6 animate-in fade-in">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  <Card className="border-2 shadow-sm border-slate-100 dark:border-slate-800">
+                  <Card className="border-2 shadow-sm">
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Aim</CardTitle></CardHeader>
-                    <CardContent><p className="text-lg font-medium text-slate-700 dark:text-slate-300">{experiment.aim}</p></CardContent>
+                    <CardContent><p className="text-lg font-medium">{experiment.aim}</p></CardContent>
                   </Card>
                   
-                  <Card className="border-2 shadow-sm border-slate-100 dark:border-slate-800">
+                  <Card className="border-2 shadow-sm">
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Theory & Principle</CardTitle></CardHeader>
                     <CardContent className="prose prose-slate dark:prose-invert max-w-none">
-                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{experiment.theory}</p>
-                      <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl my-6 border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                      <p className="leading-relaxed">{experiment.theory}</p>
+                      <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl my-6 border-2 flex items-center justify-center">
                         <code className="text-2xl font-mono font-black text-primary">{experiment.formula}</code>
                       </div>
                     </CardContent>
@@ -220,12 +207,12 @@ export default function ExperimentPage() {
                 </div>
                 
                 <div className="space-y-6">
-                  <Card className="border-2 shadow-sm border-slate-100 dark:border-slate-800">
+                  <Card className="border-2 shadow-sm">
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Apparatus</CardTitle></CardHeader>
                     <CardContent>
                       <ul className="space-y-3">
                         {experiment.apparatus.map((item, i) => (
-                          <li key={i} className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-bold">
+                          <li key={i} className="flex items-center gap-3 font-bold">
                             <div className="h-2 w-2 rounded-full bg-primary" />
                             {item}
                           </li>
@@ -237,11 +224,11 @@ export default function ExperimentPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="observations" className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <TabsContent value="observations" className="space-y-8 animate-in fade-in">
               {experiment.tables.map((table) => (
-                <Card key={table.id} className="border-2 shadow-lg border-slate-100 dark:border-slate-800">
+                <Card key={table.id} className="border-2 shadow-lg">
                   <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50">
-                    <CardTitle className="text-sm uppercase tracking-widest font-black text-slate-900 dark:text-white">{table.label}</CardTitle>
+                    <CardTitle className="text-sm uppercase tracking-widest font-black">{table.label}</CardTitle>
                     <CardDescription className="font-medium">Enter your laboratory readings below.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
@@ -255,7 +242,7 @@ export default function ExperimentPage() {
               ))}
             </TabsContent>
 
-            <TabsContent value="analysis" className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <TabsContent value="analysis" className="space-y-6 animate-in fade-in">
               <div className="grid grid-cols-1 gap-8">
                 {experiment.graphs.map((graphDef) => (
                   <PhysicsGraph 
@@ -273,8 +260,8 @@ export default function ExperimentPage() {
                 ))}
               </div>
               
-              <Card className="border-4 border-primary/20 bg-white dark:bg-slate-900 shadow-2xl">
-                <CardHeader className="bg-primary/5 border-b border-primary/10">
+              <Card className="border-4 border-primary/20 shadow-2xl">
+                <CardHeader className="bg-primary/5 border-b">
                   <CardTitle className="text-primary flex items-center gap-3 uppercase tracking-tighter font-black">
                     <Calculator className="h-6 w-6" /> Result Summary
                   </CardTitle>
@@ -282,7 +269,7 @@ export default function ExperimentPage() {
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-12 p-10">
                   <div className="space-y-2">
                     <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400">Determined Result</p>
-                    <p className="text-5xl font-mono font-black text-slate-900 dark:text-white tracking-tighter">
+                    <p className="text-5xl font-mono font-black tracking-tighter">
                       {calculatedResult ? calculatedResult.toFixed(4) : "---"}
                       <span className="text-lg ml-2 font-bold text-slate-500">{experiment.unit}</span>
                     </p>
@@ -299,7 +286,28 @@ export default function ExperimentPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="report" className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <TabsContent value="questions" className="space-y-6 animate-in fade-in">
+              <div className="max-w-4xl mx-auto">
+                <div className="flex items-center gap-3 mb-8">
+                  <MessageSquareQuote className="h-8 w-8 text-primary" />
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Viva-Voce Questions</h2>
+                </div>
+                <Accordion type="single" collapsible className="w-full space-y-4">
+                  {experiment.questions.map((q, i) => (
+                    <AccordionItem key={i} value={`q-${i}`} className="border-2 rounded-2xl px-6 bg-white dark:bg-slate-900">
+                      <AccordionTrigger className="text-left font-bold text-lg hover:no-underline">
+                        {i + 1}. {q.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-slate-600 dark:text-slate-400 text-base leading-relaxed pt-2 pb-6 border-t-2 border-slate-50 dark:border-slate-800 mt-2">
+                        {q.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="report" className="space-y-8 animate-in fade-in">
               <Card className="border-2 max-w-5xl mx-auto shadow-2xl overflow-hidden bg-white">
                 <CardContent className="p-16 report-container font-serif">
                   <div className="text-center space-y-3 mb-12 border-b-4 border-slate-900 pb-10">
@@ -322,10 +330,10 @@ export default function ExperimentPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-12">
+                  <div className="space-y-12 text-slate-900">
                     <section>
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">TITLE OF EXPERIMENT</h4>
-                      <p className="text-3xl font-black text-slate-900 uppercase leading-none">{experiment.title}</p>
+                      <p className="text-3xl font-black uppercase leading-none">{experiment.title}</p>
                     </section>
 
                     <section>
@@ -352,7 +360,7 @@ export default function ExperimentPage() {
                               </thead>
                               <tbody>
                                 {(tableData[table.id] || []).map((row, i) => (
-                                  <tr key={i} className="border-b border-slate-200 hover:bg-slate-50">
+                                  <tr key={i} className="border-b border-slate-200">
                                     <td className="border-r border-slate-200 p-3 text-center text-slate-400">{i+1}</td>
                                     {table.columns.map(col => (
                                       <td key={col.key} className="border-r border-slate-200 p-3 text-center font-mono">
@@ -375,10 +383,10 @@ export default function ExperimentPage() {
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">FINAL DETERMINATION</h4>
                       <div className="space-y-6">
                         <p className="text-lg">Based on experimental observations and analysis, the physical constant is determined as:</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-2 gap-8">
                           <div className="space-y-2">
                             <p className="text-[10px] uppercase font-black text-slate-400">Observed Value</p>
-                            <p className="text-4xl font-black text-slate-900">
+                            <p className="text-4xl font-black">
                               {calculatedResult ? calculatedResult.toFixed(4) : "__________"} {experiment.unit}
                             </p>
                           </div>
