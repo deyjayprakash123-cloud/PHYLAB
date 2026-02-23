@@ -10,14 +10,16 @@ import {
   Line,
   LineChart,
   Legend,
-  ReferenceArea,
   Dot
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Download, Info } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, Info, Settings2, RotateCcw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface PhysicsGraphProps {
   data: DataPoint[];
@@ -45,6 +47,11 @@ export function PhysicsGraph({
   equationFormat
 }: PhysicsGraphProps) {
   const [clickedPoint, setClickedPoint] = useState<{ x: number; y: number; label?: string } | null>(null);
+  
+  // Custom Scale State
+  const [useCustomScale, setUseCustomScale] = useState(false);
+  const [xScale, setXScale] = useState({ min: "", max: "" });
+  const [yScale, setYScale] = useState({ min: "", max: "" });
 
   const validPoints = useMemo(() => {
     return data
@@ -69,7 +76,6 @@ export function PhysicsGraph({
 
   const mergedData = useMemo(() => {
     if (!regression) return validPoints;
-    // For single series with best fit, we merge the regression line
     return [...validPoints, ...bestFitData].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
   }, [validPoints, bestFitData, regression]);
 
@@ -89,8 +95,6 @@ export function PhysicsGraph({
   };
 
   const handleExport = () => {
-    // Academic style export would ideally use html-to-image
-    // For now, we use a simple message as it requires specific server/lib support
     toast({
       title: "Export Feature",
       description: "Generating PNG image... Please use the Print feature in the main dashboard for a full laboratory report.",
@@ -109,6 +113,9 @@ export function PhysicsGraph({
     return regression.equation;
   }, [regression, equationFormat]);
 
+  const xDomain = useCustomScale ? [parseFloat(xScale.min) || 0, parseFloat(xScale.max) || "auto"] : ["auto", "auto"];
+  const yDomain = useCustomScale ? [parseFloat(yScale.min) || 0, parseFloat(yScale.max) || "auto"] : ["auto", "auto"];
+
   return (
     <Card className="border-2 overflow-hidden shadow-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
       <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
@@ -116,7 +123,81 @@ export function PhysicsGraph({
           <CardTitle className="text-lg font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tight">
             {title}
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 no-print">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-2">
+                  <Settings2 className="h-3.5 w-3.5" /> Scale
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Axis Scaling</h4>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setUseCustomScale(false);
+                        setXScale({ min: "", max: "" });
+                        setYScale({ min: "", max: "" });
+                      }}
+                      className="h-8 px-2 text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" /> Reset
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-slate-500">X-Min</Label>
+                      <Input 
+                        type="number" 
+                        value={xScale.min} 
+                        onChange={(e) => { setXScale(prev => ({ ...prev, min: e.target.value })); setUseCustomScale(true); }}
+                        placeholder="Auto"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-slate-500">X-Max</Label>
+                      <Input 
+                        type="number" 
+                        value={xScale.max} 
+                        onChange={(e) => { setXScale(prev => ({ ...prev, max: e.target.value })); setUseCustomScale(true); }}
+                        placeholder="Auto"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-slate-500">Y-Min</Label>
+                      <Input 
+                        type="number" 
+                        value={yScale.min} 
+                        onChange={(e) => { setYScale(prev => ({ ...prev, min: e.target.value })); setUseCustomScale(true); }}
+                        placeholder="Auto"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-slate-500">Y-Max</Label>
+                      <Input 
+                        type="number" 
+                        value={yScale.max} 
+                        onChange={(e) => { setYScale(prev => ({ ...prev, max: e.target.value })); setUseCustomScale(true); }}
+                        placeholder="Auto"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                  
+                  <p className="text-[10px] text-muted-foreground italic">Setting any value will enable custom scaling.</p>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button variant="outline" size="sm" onClick={handleExport} className="h-8 gap-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
               <Download className="h-3.5 w-3.5" /> Export PNG
             </Button>
@@ -151,7 +232,8 @@ export function PhysicsGraph({
                 type="number" 
                 dataKey="x" 
                 name={xLabel} 
-                domain={['auto', 'auto']}
+                domain={xDomain as any}
+                allowDataOverflow={useCustomScale}
                 stroke="#334155"
                 tick={{fontSize: 12, fontWeight: 500}}
                 label={{ 
@@ -164,6 +246,8 @@ export function PhysicsGraph({
               <YAxis 
                 type="number" 
                 stroke="#334155"
+                domain={yDomain as any}
+                allowDataOverflow={useCustomScale}
                 tick={{fontSize: 12, fontWeight: 500}}
                 label={{ 
                   value: `${yLabel}${yUnit ? ` (${yUnit})` : ""}`, 
@@ -239,7 +323,7 @@ export function PhysicsGraph({
         </div>
         
         {clickedPoint && (
-          <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
             <div className="flex items-center gap-3">
               <div className="bg-primary/20 p-2 rounded-full">
                 <Info className="h-4 w-4 text-primary" />
