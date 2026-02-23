@@ -41,8 +41,8 @@ export const experiments: Experiment[] = [
     category: "Mechanics",
     aim: "To determine the acceleration due to gravity (g) using a bar pendulum.",
     apparatus: ["Bar pendulum", "Stopwatch", "Meter scale", "Knife edge support", "Telescope"],
-    theory: "A bar pendulum is a physical pendulum. g = 4π²L/T² where L is the equivalent length.",
-    formula: "g = 4π² * slope (where slope = L/T²)",
+    theory: "g = 4π²L/T² where L is the equivalent length and T is the time period.",
+    formula: "g = 4π² * (L/T²)",
     standardValue: 981,
     unit: "cm/s²",
     tables: [
@@ -91,8 +91,8 @@ export const experiments: Experiment[] = [
     aim: "To determine Young’s Modulus of the material of a rectangular beam by the method of bending.",
     apparatus: ["Rectangular beam", "Knife edges", "Screw gauge", "Vernier caliper", "Weights"],
     theory: "Young's modulus Y = MgL³ / 4bd³δ.",
-    formula: "Y = (M * g * L³) / (4 * b * d³ * δ)",
-    standardValue: 2e12,
+    formula: "Y = (M/δ) * (gL³/4bd³)",
+    standardValue: 1.24e12,
     unit: "dyne/cm²",
     tables: [
       {
@@ -151,13 +151,14 @@ export const experiments: Experiment[] = [
     category: "Properties of Matter",
     aim: "To determine the rigidity modulus (η) of the material of a wire.",
     apparatus: ["Barton's apparatus", "Weights", "Vernier caliper", "Screw gauge"],
-    theory: "Rigidity modulus η = (g * d^4 * l) / (π * r^4 * θ).",
+    theory: "η = (gd⁴l) / (πr⁴θ).",
     formula: "η = (g * d^4 * l) / (π * r^4 * θ)",
+    standardValue: 8.22e11,
     unit: "dyne/cm²",
     tables: [
       {
         id: "radius",
-        label: "Table 1: Radius (Screw Gauge)",
+        label: "Table 1: Radius of Wire (Screw Gauge)",
         columns: [
           { key: "obs_no", label: "Obs No" },
           { key: "total", label: "Total", unit: "cm" },
@@ -238,24 +239,27 @@ export const experiments: Experiment[] = [
     apparatus: ["Sonometer", "Tuning forks", "Weights"],
     theory: "Frequency n = (1/2l)√(T/m).",
     formula: "n ∝ 1/l and n ∝ √T",
+    standardValue: 256,
     unit: "Hz",
     tables: [
       {
         id: "law-length",
-        label: "Verification of Law of Length",
+        label: "Table 1: Law of Length (Constant Tension)",
         columns: [
           { key: "obs_no", label: "Obs No" },
           { key: "freq", label: "Frequency n", unit: "Hz" },
+          { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
         ]
       },
       {
         id: "law-tension",
-        label: "Verification of Law of Tension",
+        label: "Table 2: Law of Tension (Constant Frequency)",
         columns: [
           { key: "obs_no", label: "Obs No" },
+          { key: "tension", label: "Tension T", unit: "N" },
           { key: "tension_sqrt", label: "√T", unit: "√N" },
-          { key: "freq", label: "Frequency n", unit: "Hz" },
+          { key: "mean_l", label: "Mean l", unit: "cm" },
         ]
       }
     ],
@@ -292,7 +296,7 @@ export const experiments: Experiment[] = [
     apparatus: ["Sodium lamp", "Traveling microscope", "Plano-convex lens", "Glass plate"],
     theory: "λ = (D²m - D²n) / [4R(m - n)].",
     formula: "λ = slope / 4R",
-    standardValue: 5890,
+    standardValue: 5893,
     unit: "Å",
     tables: [
       {
@@ -327,7 +331,8 @@ export const experiments: Experiment[] = [
     aim: "To determine the wavelength of a LASER beam using a diffraction grating.",
     apparatus: ["LASER source", "Diffraction grating", "Screen"],
     theory: "mλ = (a+b)sinθ.",
-    formula: "λ = slope * (a+b)",
+    formula: "λ = (a+b)sinθ / m",
+    standardValue: 6328,
     unit: "Å",
     tables: [
       {
@@ -336,6 +341,8 @@ export const experiments: Experiment[] = [
         columns: [
           { key: "sl_no", label: "Sl No" },
           { key: "order", label: "Order m" },
+          { key: "ym", label: "Distance y", unit: "cm" },
+          { key: "D_screen", label: "Screen Dist D", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
         ]
       }
@@ -368,7 +375,6 @@ export const experiments: Experiment[] = [
         id: "rc-data",
         label: "Charging & Discharging Data",
         columns: [
-          { key: "sl_no", label: "Sl No" },
           { key: "time", label: "Time", unit: "s" },
           { key: "v_charge", label: "Charging Voltage", unit: "V" },
           { key: "v_discharge", label: "Discharging Voltage", unit: "V" },
@@ -478,14 +484,17 @@ export const experiments: Experiment[] = [
     apparatus: ["Metre bridge", "Galvanometer", "Resistance box", "Unknown resistance"],
     theory: "P/Q = l1/l2.",
     formula: "P = Q * (l1 / l2)",
+    standardValue: 10,
     unit: "Ω",
     tables: [
       {
         id: "resistance",
         label: "Observation Table",
         columns: [
+          { key: "res_box", label: "Resistance Q", unit: "Ω" },
           { key: "l1", label: "l1", unit: "cm" },
-          { key: "l2", label: "l2", unit: "cm" },
+          { key: "l2", label: "l2 = 100-l1", unit: "cm" },
+          { key: "calc_p", label: "Q * (l1/l2)", unit: "Ω" },
         ]
       }
     ],
@@ -511,7 +520,8 @@ export const experiments: Experiment[] = [
     apparatus: ["PN diode", "Voltmeter", "Ammeter", "Power supply"],
     theory: "Current follows exponential relationship in forward bias.",
     formula: "I = Is * (e^(V/ηVt) - 1)",
-    unit: "mA",
+    standardValue: 0.7,
+    unit: "V (Knee)",
     tables: [
       {
         id: "forward-bias",
@@ -565,6 +575,7 @@ export const standardValues = [
   { name: "Sodium light wavelength (λ)", value: "5890–5896 Å" },
   { name: "Surface tension of water", value: "69–72 dyne/cm" },
   { name: "Young's Modulus (Copper)", value: "12.4 x 10¹¹ dyne/cm²" },
+  { name: "Rigidity Modulus (Steel)", value: "8.22 x 10¹¹ dyne/cm²" },
   { name: "Plank's Constant (h)", value: "6.626 x 10⁻³⁴ J·s" },
   { name: "Speed of Light (c)", value: "3 x 10⁸ m/s" }
 ];
