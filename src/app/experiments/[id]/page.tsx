@@ -25,7 +25,12 @@ export default function ExperimentPage() {
     if (experiment && Object.keys(tableData).length === 0) {
       const initial: Record<string, any[]> = {};
       experiment.tables.forEach(t => {
-        initial[t.id] = [];
+        const rows = [];
+        const numRows = t.defaultRows || 5;
+        for (let i = 0; i < numRows; i++) {
+          rows.push(t.columns.reduce((acc, col) => ({ ...acc, [col.key]: "" }), {}));
+        }
+        initial[t.id] = rows;
       });
       setTableData(initial);
     }
@@ -43,7 +48,45 @@ export default function ExperimentPage() {
   }
 
   const handleTableChange = (tableId: string, newData: any[]) => {
-    setTableData(prev => ({ ...prev, [tableId]: newData }));
+    // Automatic calculations based on manual steps
+    const processedData = newData.map(row => {
+      const updatedRow = { ...row };
+      
+      // Bar Pendulum: Mean t and T
+      if (experiment.id === 'bar-pendulum' && tableId === 'time-measurement') {
+        const t1 = parseFloat(row.t1) || 0;
+        const t2 = parseFloat(row.t2) || 0;
+        const t3 = parseFloat(row.t3) || 0;
+        if (t1 && t2 && t3) {
+          const mean_t = (t1 + t2 + t3) / 3;
+          updatedRow.mean_t = mean_t.toFixed(4);
+          updatedRow.T = (mean_t / 20).toFixed(4);
+        }
+      }
+
+      // Bar Pendulum Table 2: L, T, T2, L/T2
+      if (experiment.id === 'bar-pendulum' && tableId === 'eq-len-calc') {
+        const L1 = parseFloat(row.L1) || 0;
+        const L2 = parseFloat(row.L2) || 0;
+        const T = parseFloat(row.T) || 0;
+        if (L1 && L2) updatedRow.mean_L = ((L1 + L2) / 2).toFixed(4);
+        if (T) {
+          updatedRow.T2 = (T * T).toFixed(4);
+          if (updatedRow.mean_L) updatedRow.L_T2 = (parseFloat(updatedRow.mean_L) / (T * T)).toFixed(4);
+        }
+      }
+
+      // Young's Modulus Table 3: Mean and Depression
+      if (experiment.id === 'youngs-modulus' && tableId === 'depression') {
+        const inc = parseFloat(row.inc) || 0;
+        const dec = parseFloat(row.dec) || 0;
+        if (inc && dec) updatedRow.mean = ((inc + dec) / 2).toFixed(4);
+      }
+
+      return updatedRow;
+    });
+
+    setTableData(prev => ({ ...prev, [tableId]: processedData }));
   };
 
   const getGraphData = (graphDef: any): DataPoint[] => {
@@ -71,33 +114,26 @@ export default function ExperimentPage() {
     if (!mainGraph) return null;
     
     const data = getGraphData(mainGraph);
-    if (data.length < 2 && experiment.id !== 'surface-tension' && experiment.id !== 'metre-bridge') return null;
+    if (data.length < 2) return null;
     
     const regression = calculateLinearRegression(data);
     let result = 0;
-    const g = 981;
+    const g_const = 981;
 
     switch (experiment.id) {
       case "bar-pendulum":
         result = (4 * Math.PI * Math.PI) * (regression.slope || 0);
         break;
       case "youngs-modulus":
-        const L_y = 50, b_y = 2, d_y = 0.5;
-        result = (g * Math.pow(L_y, 3) * regression.slope) / (4 * b_y * Math.pow(d_y, 3));
+        const l_y = 50, b_y = 2, d_y = 0.5; // Hypothetical manual constants
+        result = (regression.slope * g_const * Math.pow(l_y, 3)) / (4 * b_y * Math.pow(d_y, 3));
         break;
       case "rigidity-modulus":
-        const l_wire = 60, r_wire = 0.05, d_cyl = 4;
-        const inv_slope = 1 / (regression.slope || 1);
-        result = (g * Math.pow(d_cyl, 4) * l_wire * inv_slope) / (Math.PI * Math.pow(r_wire, 4));
+        const d_cyl = 4, l_wire = 60, r_wire = 0.05;
+        result = (g_const * Math.pow(d_cyl, 4) * l_wire * regression.slope) / (Math.PI * Math.pow(r_wire, 4));
         break;
       case "surface-tension":
-        const surfData = tableData['final-calc'] || [];
-        if (surfData.length === 0) return null;
-        const means = surfData.map(row => (parseFloat(row.h) * parseFloat(row.r) * 1 * g) / 2);
-        result = means.reduce((a, b) => a + b, 0) / (means.length || 1);
-        break;
-      case "sonometer":
-        result = regression.slope; 
+        result = regression.slope; // Simplified
         break;
       case "newtons-rings":
         const R_opt = 100;
@@ -106,25 +142,6 @@ export default function ExperimentPage() {
       case "laser-wavelength":
         const grating_element = 1/600; 
         result = regression.slope * grating_element * 1e8; 
-        break;
-      case "rc-circuit":
-        const rcData = tableData['rc-data'] || [];
-        if (rcData.length === 0) return null;
-        const maxV = Math.max(...rcData.map(r => parseFloat(r.v_charge) || 0));
-        const target = 0.632 * maxV;
-        const closest = rcData.reduce((prev, curr) => 
-          Math.abs(parseFloat(curr.v_charge) - target) < Math.abs(parseFloat(prev.v_charge) - target) ? curr : prev
-        );
-        result = parseFloat(closest.time) || 0;
-        break;
-      case "metre-bridge":
-        const bridgeData = tableData['resistance'] || [];
-        if (bridgeData.length === 0) return null;
-        const pValues = bridgeData.map(row => parseFloat(row.calc_p) || 0).filter(v => v > 0);
-        result = pValues.reduce((a, b) => a + b, 0) / (pValues.length || 1);
-        break;
-      case "pn-junction":
-        result = 0.7; 
         break;
       default:
         result = regression.slope;
@@ -260,7 +277,7 @@ export default function ExperimentPage() {
                 ))}
               </div>
               
-              <Card className="border-4 border-primary/20 shadow-2xl">
+              <Card className="border-4 border-primary/20 shadow-2xl mt-8">
                 <CardHeader className="bg-primary/5 border-b">
                   <CardTitle className="text-primary flex items-center gap-3 uppercase tracking-tighter font-black">
                     <Calculator className="h-6 w-6" /> Result Summary

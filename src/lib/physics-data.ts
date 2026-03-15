@@ -3,6 +3,7 @@ export type TableDefinition = {
   id: string;
   label: string;
   columns: TableHeader[];
+  defaultRows?: number;
 };
 
 export type GraphDefinition = {
@@ -54,10 +55,11 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "time-measurement",
-        label: "Table 1: Time Measurement",
+        label: "Table 1: Time Measurement (20 Oscillations)",
+        defaultRows: 19,
         columns: [
-          { key: "hole_no", label: "Hole No." },
-          { key: "dist_cg", label: "Dist from C.G", unit: "cm" },
+          { key: "hole_no", label: "Hole No" },
+          { key: "dist_cg", label: "Dist from CG", unit: "cm" },
           { key: "t1", label: "t1", unit: "s" },
           { key: "t2", label: "t2", unit: "s" },
           { key: "t3", label: "t3", unit: "s" },
@@ -68,20 +70,25 @@ export const experiments: Experiment[] = [
       {
         id: "eq-len-calc",
         label: "Table 2: Equivalent Length Calculation",
+        defaultRows: 3,
         columns: [
-          { key: "sl_no", label: "Sl No." },
-          { key: "eq_len", label: "Equivalent Length L", unit: "cm" },
-          { key: "T_period_sq", label: "T²", unit: "s²" },
+          { key: "set_no", label: "Set No" },
+          { key: "L1", label: "L1", unit: "cm" },
+          { key: "L2", label: "L2", unit: "cm" },
+          { key: "mean_L", label: "Mean L", unit: "cm" },
+          { key: "T", label: "T", unit: "s" },
+          { key: "T2", label: "T²", unit: "s²" },
+          { key: "L_T2", label: "L/T²" },
         ]
       }
     ],
     graphs: [
       {
         id: "l-vs-t2",
-        title: "Graph of L vs T²",
+        title: "L vs T² Graph",
         tableId: "eq-len-calc",
-        xKey: "T_period_sq",
-        yKey: "eq_len",
+        xKey: "T2",
+        yKey: "mean_L",
         xLabel: "Time period squared (T²)",
         yLabel: "Equivalent length (L)",
         xUnit: "s²",
@@ -114,34 +121,43 @@ export const experiments: Experiment[] = [
       {
         id: "thickness",
         label: "Table 1: Thickness (Screw Gauge)",
+        defaultRows: 5,
         columns: [
           { key: "obs_no", label: "Obs No" },
+          { key: "pitch", label: "Pitch", unit: "cm" },
+          { key: "lc", label: "Least Count", unit: "cm" },
           { key: "icsr", label: "ICSR" },
-          { key: "n_rot", label: "N (Rotations)" },
-          { key: "psr", label: "PSR", unit: "cm" },
+          { key: "n", label: "No. Rotations N" },
+          { key: "psr", label: "PSR = N×P", unit: "cm" },
           { key: "diff", label: "Diff (I-F)" },
           { key: "csr", label: "CSR", unit: "cm" },
-          { key: "total", label: "Total", unit: "cm" },
+          { key: "total", label: "Total Reading", unit: "cm" },
+          { key: "mean_d", label: "Mean Thickness d", unit: "cm" },
         ]
       },
       {
         id: "breadth",
         label: "Table 2: Breadth (Vernier Caliper)",
+        defaultRows: 5,
         columns: [
           { key: "obs_no", label: "Obs No" },
-          { key: "msr", label: "MSR", unit: "cm" },
-          { key: "vc", label: "VC" },
-          { key: "vsr", label: "VSR", unit: "cm" },
-          { key: "total", label: "Total", unit: "cm" },
+          { key: "msr", label: "Main Scale Reading (MSR)", unit: "cm" },
+          { key: "vc", label: "Vernier Coincidence (VC)" },
+          { key: "vsr", label: "VSR = VC×LC", unit: "cm" },
+          { key: "total", label: "Total Reading", unit: "cm" },
+          { key: "mean_b", label: "Mean Breadth b", unit: "cm" },
         ]
       },
       {
         id: "depression",
-        label: "Table 3: Depression Measurement",
+        label: "Table 3: Load vs Depression",
+        defaultRows: 6,
         columns: [
-          { key: "obs_no", label: "Obs No" },
+          { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "gm" },
-          { key: "mean_total", label: "Mean (a+b)/2", unit: "cm" },
+          { key: "inc", label: "Increasing Reading", unit: "cm" },
+          { key: "dec", label: "Decreasing Reading", unit: "cm" },
+          { key: "mean", label: "Mean Reading", unit: "cm" },
           { key: "depression", label: "Depression δ", unit: "cm" },
         ]
       }
@@ -149,7 +165,7 @@ export const experiments: Experiment[] = [
     graphs: [
       {
         id: "load-vs-dep",
-        title: "Graph of Load vs Depression",
+        title: "Load vs Depression",
         tableId: "depression",
         xKey: "depression",
         yKey: "load",
@@ -184,25 +200,44 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "radius",
-        label: "Table 1: Radius of Wire (Screw Gauge)",
+        label: "Table 1: Radius of Rod",
+        defaultRows: 5,
         columns: [
-          { key: "obs_no", label: "Obs No" },
+          { key: "obs", label: "Obs" },
+          { key: "pitch", label: "Pitch", unit: "cm" },
+          { key: "lc", label: "LC", unit: "cm" },
+          { key: "icsr", label: "ICSR" },
+          { key: "n", label: "No Rotations" },
+          { key: "psr", label: "PSR", unit: "cm" },
+          { key: "diff", label: "Difference" },
+          { key: "csr", label: "CSR", unit: "cm" },
           { key: "total", label: "Total", unit: "cm" },
+          { key: "mean_r", label: "Mean Radius", unit: "cm" },
         ]
       },
       {
         id: "diameter",
-        label: "Table 2: Diameter of Cylinder (Vernier)",
+        label: "Table 2: Cylinder Diameter",
+        defaultRows: 5,
         columns: [
-          { key: "obs_no", label: "Obs No" },
+          { key: "obs", label: "Obs" },
+          { key: "msr", label: "MSR", unit: "cm" },
+          { key: "vc", label: "VC" },
+          { key: "vsr", label: "VSR", unit: "cm" },
           { key: "total", label: "Total", unit: "cm" },
+          { key: "mean_d", label: "Mean Diameter", unit: "cm" },
         ]
       },
       {
         id: "twist",
-        label: "Table 3: Twist Angle Measurement",
+        label: "Table 3: Load vs Twist",
+        defaultRows: 6,
         columns: [
+          { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "kg" },
+          { key: "inc", label: "Scale Reading Inc", unit: "cm" },
+          { key: "dec", label: "Scale Reading Dec", unit: "cm" },
+          { key: "mean", label: "Mean Angle", unit: "deg" },
           { key: "twist", label: "Twist θ", unit: "deg" },
         ]
       }
@@ -210,7 +245,7 @@ export const experiments: Experiment[] = [
     graphs: [
       {
         id: "load-vs-twist",
-        title: "Graph of Load vs Twist Angle",
+        title: "Load vs Twist Angle",
         tableId: "twist",
         xKey: "twist",
         yKey: "load",
@@ -242,13 +277,37 @@ export const experiments: Experiment[] = [
     unit: "dyne/cm",
     tables: [
       {
-        id: "final-calc",
-        label: "Final Calculation Table",
+        id: "height",
+        label: "Table 1: Height Measurement",
+        defaultRows: 3,
         columns: [
-          { key: "tube_no", label: "Tube No" },
-          { key: "h", label: "h", unit: "cm" },
+          { key: "tube", label: "Tube" },
+          { key: "meniscus", label: "Meniscus Reading", unit: "cm" },
+          { key: "needle", label: "Needle Reading", unit: "cm" },
+          { key: "h", label: "Height h", unit: "cm" },
+        ]
+      },
+      {
+        id: "diameter",
+        label: "Table 2: Diameter Measurement",
+        defaultRows: 3,
+        columns: [
+          { key: "tube", label: "Tube" },
+          { key: "lhs", label: "LHS Reading", unit: "cm" },
+          { key: "rhs", label: "RHS Reading", unit: "cm" },
+          { key: "d1", label: "D1", unit: "cm" },
+        ]
+      },
+      {
+        id: "final-calc",
+        label: "Table 3: Final Calculation",
+        defaultRows: 3,
+        columns: [
+          { key: "tube", label: "Tube" },
+          { key: "h", label: "Height h", unit: "cm" },
+          { key: "r", label: "Radius r", unit: "cm" },
           { key: "inv_r", label: "1/r", unit: "cm⁻¹" },
-          { key: "T", label: "T", unit: "dyne/cm" },
+          { key: "T", label: "Surface Tension T", unit: "dyne/cm" },
         ]
       }
     ],
@@ -288,29 +347,38 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "law-length",
-        label: "Table 1: Law of Length (Constant Tension)",
+        label: "Table 1: Frequency vs Length (Constant Weight)",
+        defaultRows: 5,
         columns: [
-          { key: "obs_no", label: "Obs No" },
+          { key: "obs_no", label: "Obs" },
           { key: "freq", label: "Frequency n", unit: "Hz" },
+          { key: "inc", label: "Length Increasing", unit: "cm" },
+          { key: "dec", label: "Length Decreasing", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
+          { key: "nl", label: "n×l" },
         ]
       },
       {
         id: "law-tension",
-        label: "Table 2: Law of Tension (Constant Frequency)",
+        label: "Table 2: Tension vs Length (Constant Frequency)",
+        defaultRows: 5,
         columns: [
-          { key: "obs_no", label: "Obs No" },
+          { key: "obs_no", label: "Obs" },
           { key: "tension", label: "Tension T", unit: "N" },
-          { key: "tension_sqrt", label: "√T", unit: "√N" },
+          { key: "inc", label: "Length Increasing", unit: "cm" },
+          { key: "dec", label: "Length Decreasing", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
+          { key: "l2", label: "l²", unit: "cm²" },
+          { key: "T_l2", label: "T/l²" },
+          { key: "sqrt_T", label: "√T", unit: "√N" },
         ]
       }
     ],
     graphs: [
       {
         id: "law-len-graph",
-        title: "Verification of Law of Length (n vs 1/l)",
+        title: "Verification of Law of Length",
         tableId: "law-length",
         xKey: "inv_l",
         yKey: "freq",
@@ -321,9 +389,9 @@ export const experiments: Experiment[] = [
       },
       {
         id: "law-ten-graph",
-        title: "Verification of Law of Tension (n vs √T)",
+        title: "Verification of Law of Tension",
         tableId: "law-tension",
-        xKey: "tension_sqrt",
+        xKey: "sqrt_T",
         yKey: "freq",
         xLabel: "√T",
         yLabel: "Frequency (n)",
@@ -354,10 +422,13 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "rings",
-        label: "Observation Table: Ring Diameters",
+        label: "Observation Table (10 Rings)",
+        defaultRows: 10,
         columns: [
-          { key: "ring_no", label: "n (Ring No)" },
-          { key: "total_d", label: "Diameter D", unit: "cm" },
+          { key: "ring_no", label: "Ring No" },
+          { key: "initial", label: "Initial Reading", unit: "cm" },
+          { key: "final", label: "Final Reading", unit: "cm" },
+          { key: "diameter", label: "Diameter D", unit: "cm" },
           { key: "d2", label: "D²", unit: "cm²" },
         ]
       }
@@ -400,12 +471,16 @@ export const experiments: Experiment[] = [
       {
         id: "laser-obs",
         label: "Observation Table",
+        defaultRows: 8,
         columns: [
-          { key: "sl_no", label: "Sl No" },
+          { key: "obs", label: "Obs" },
+          { key: "lines", label: "Lines/cm" },
+          { key: "grating", label: "Grating Element" },
           { key: "order", label: "Order m" },
-          { key: "ym", label: "Distance y", unit: "cm" },
-          { key: "D_screen", label: "Screen Dist D", unit: "cm" },
+          { key: "y", label: "y", unit: "cm" },
+          { key: "D", label: "D", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
+          { key: "lambda", label: "λ", unit: "Å" },
         ]
       }
     ],
@@ -443,7 +518,8 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "rc-data",
-        label: "Charging & Discharging Data",
+        label: "Time-Voltage Table",
+        defaultRows: 20,
         columns: [
           { key: "time", label: "Time", unit: "s" },
           { key: "v_charge", label: "Charging Voltage", unit: "V" },
@@ -498,22 +574,24 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "input-char",
-        label: "Input Characteristics",
+        label: "Table 1: Input Characteristics",
+        defaultRows: 10,
         columns: [
           { key: "vbe", label: "VBE", unit: "V" },
           { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
-          { key: "ib_4v", label: "IB at 4V", unit: "µA" },
-          { key: "ib_8v", label: "IB at 8V", unit: "µA" },
+          { key: "ib_4v", label: "IB at VCE=4V", unit: "µA" },
+          { key: "ib_8v", label: "IB at VCE=8V", unit: "µA" },
         ]
       },
       {
         id: "output-char",
-        label: "Output Characteristics",
+        label: "Table 2: Output Characteristics",
+        defaultRows: 10,
         columns: [
           { key: "vce", label: "VCE", unit: "V" },
           { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
-          { key: "ic_150", label: "IC at 150µA", unit: "mA" },
-          { key: "ic_175", label: "IC at 175µA", unit: "mA" },
+          { key: "ic_150", label: "IC at IB=150µA", unit: "mA" },
+          { key: "ic_175", label: "IC at IB=175µA", unit: "mA" },
         ]
       }
     ],
@@ -575,19 +653,21 @@ export const experiments: Experiment[] = [
     tables: [
       {
         id: "resistance",
-        label: "Observation Table",
+        label: "Observation Table (10 Observations)",
+        defaultRows: 10,
         columns: [
-          { key: "res_box", label: "Resistance Q", unit: "Ω" },
+          { key: "obs", label: "Obs" },
+          { key: "res_p", label: "Resistance P", unit: "Ω" },
           { key: "l1", label: "l1", unit: "cm" },
-          { key: "l2", label: "l2 = 100-l1", unit: "cm" },
-          { key: "calc_p", label: "Q * (l1/l2)", unit: "Ω" },
+          { key: "l2", label: "l2 = 100 - l1", unit: "cm" },
+          { key: "q", label: "Q", unit: "Ω" },
         ]
       }
     ],
     graphs: [
       {
         id: "l1-vs-l2",
-        title: "Verification of Wheatstone Bridge (l1 vs l2)",
+        title: "Verification of Wheatstone Bridge",
         tableId: "resistance",
         xKey: "l1",
         yKey: "l2",
@@ -614,22 +694,17 @@ export const experiments: Experiment[] = [
     theory: "Current follows exponential relationship in forward bias.",
     formula: "I = Is * (e^(V/ηVt) - 1)",
     standardValue: 0.7,
-    unit: "V (Knee)",
+    unit: "V",
     tables: [
       {
-        id: "forward-bias",
-        label: "Forward Bias Table",
+        id: "characteristics",
+        label: "V-I Characteristics (10 Readings)",
+        defaultRows: 10,
         columns: [
-          { key: "v", label: "Forward Voltage", unit: "V" },
-          { key: "i", label: "Forward Current", unit: "mA" },
-        ]
-      },
-      {
-        id: "reverse-bias",
-        label: "Reverse Bias Table",
-        columns: [
-          { key: "v", label: "Reverse Voltage", unit: "V" },
-          { key: "i", label: "Reverse Current", unit: "µA" },
+          { key: "v_f", label: "Forward Voltage", unit: "V" },
+          { key: "i_f", label: "Forward Current", unit: "mA" },
+          { key: "v_r", label: "Reverse Voltage", unit: "V" },
+          { key: "i_r", label: "Reverse Current", unit: "µA" },
         ]
       }
     ],
@@ -637,11 +712,11 @@ export const experiments: Experiment[] = [
       {
         id: "forward-graph",
         title: "Forward Bias V-I Characteristics",
-        tableId: "forward-bias",
-        xKey: "v",
-        yKey: "i",
-        xLabel: "Forward Voltage (V)",
-        yLabel: "Forward Current (mA)",
+        tableId: "characteristics",
+        xKey: "v_f",
+        yKey: "i_f",
+        xLabel: "Voltage",
+        yLabel: "Current",
         xUnit: "V",
         yUnit: "mA",
         type: "monotone"
@@ -649,11 +724,11 @@ export const experiments: Experiment[] = [
       {
         id: "reverse-graph",
         title: "Reverse Bias V-I Characteristics",
-        tableId: "reverse-bias",
-        xKey: "v",
-        yKey: "i",
-        xLabel: "Reverse Voltage (V)",
-        yLabel: "Reverse Current (µA)",
+        tableId: "characteristics",
+        xKey: "v_r",
+        yKey: "i_r",
+        xLabel: "Voltage",
+        yLabel: "Current",
         xUnit: "V",
         yUnit: "µA",
         type: "monotone"
