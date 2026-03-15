@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ObservationTable } from "@/components/ObservationTable";
 import { PhysicsGraph } from "@/components/PhysicsGraph";
-import { calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
-import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, MessageSquareQuote } from "lucide-react";
+import { calculatePercentageError, calculateLinearRegression, generateSimulatedData, type DataPoint } from "@/lib/utils/physics-calc";
+import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, MessageSquareQuote, Zap } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function ExperimentPage() {
   const { id } = useParams();
@@ -20,6 +23,8 @@ export default function ExperimentPage() {
 
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState("overview");
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simTarget, setSimTarget] = useState("");
 
   useEffect(() => {
     if (experiment && Object.keys(tableData).length === 0) {
@@ -48,45 +53,19 @@ export default function ExperimentPage() {
   }
 
   const handleTableChange = (tableId: string, newData: any[]) => {
-    // Automatic calculations based on manual steps
-    const processedData = newData.map(row => {
-      const updatedRow = { ...row };
-      
-      // Bar Pendulum: Mean t and T
-      if (experiment.id === 'bar-pendulum' && tableId === 'time-measurement') {
-        const t1 = parseFloat(row.t1) || 0;
-        const t2 = parseFloat(row.t2) || 0;
-        const t3 = parseFloat(row.t3) || 0;
-        if (t1 && t2 && t3) {
-          const mean_t = (t1 + t2 + t3) / 3;
-          updatedRow.mean_t = mean_t.toFixed(4);
-          updatedRow.T = (mean_t / 20).toFixed(4);
-        }
-      }
+    setTableData(prev => ({ ...prev, [tableId]: newData }));
+  };
 
-      // Bar Pendulum Table 2: L, T, T2, L/T2
-      if (experiment.id === 'bar-pendulum' && tableId === 'eq-len-calc') {
-        const L1 = parseFloat(row.L1) || 0;
-        const L2 = parseFloat(row.L2) || 0;
-        const T = parseFloat(row.T) || 0;
-        if (L1 && L2) updatedRow.mean_L = ((L1 + L2) / 2).toFixed(4);
-        if (T) {
-          updatedRow.T2 = (T * T).toFixed(4);
-          if (updatedRow.mean_L) updatedRow.L_T2 = (parseFloat(updatedRow.mean_L) / (T * T)).toFixed(4);
-        }
-      }
-
-      // Young's Modulus Table 3: Mean and Depression
-      if (experiment.id === 'youngs-modulus' && tableId === 'depression') {
-        const inc = parseFloat(row.inc) || 0;
-        const dec = parseFloat(row.dec) || 0;
-        if (inc && dec) updatedRow.mean = ((inc + dec) / 2).toFixed(4);
-      }
-
-      return updatedRow;
-    });
-
-    setTableData(prev => ({ ...prev, [tableId]: processedData }));
+  const handleSimulate = () => {
+    const target = parseFloat(simTarget);
+    if (isNaN(target)) {
+      toast({ variant: "destructive", title: "Invalid Input", description: "Please enter a valid numeric target value." });
+      return;
+    }
+    const simulated = generateSimulatedData(experiment.id, target);
+    setTableData(simulated);
+    setIsSimulating(false);
+    toast({ title: "Data Generated", description: `Simulated observations for target value: ${target}` });
   };
 
   const getGraphData = (graphDef: any): DataPoint[] => {
@@ -97,25 +76,21 @@ export default function ExperimentPage() {
           x: parseFloat(row[graphDef.xKey]) || 0,
           y: Array.isArray(graphDef.yKey) ? 0 : (parseFloat(row[graphDef.yKey]) || 0)
         };
-        
         if (Array.isArray(graphDef.yKey)) {
           graphDef.yKey.forEach((key: string) => {
             point[key] = parseFloat(row[key]) || 0;
           });
         }
-        
         return point;
       })
-      .filter((p) => !isNaN(p.x));
+      .filter((p) => !isNaN(Number(p.x)));
   };
 
   const calculatedResult = useMemo(() => {
     const mainGraph = experiment.graphs[0];
     if (!mainGraph) return null;
-    
     const data = getGraphData(mainGraph);
     if (data.length < 2) return null;
-    
     const regression = calculateLinearRegression(data);
     let result = 0;
     const g_const = 981;
@@ -125,15 +100,12 @@ export default function ExperimentPage() {
         result = (4 * Math.PI * Math.PI) * (regression.slope || 0);
         break;
       case "youngs-modulus":
-        const l_y = 50, b_y = 2, d_y = 0.5; // Hypothetical manual constants
+        const l_y = 60, b_y = 2, d_y = 0.5;
         result = (regression.slope * g_const * Math.pow(l_y, 3)) / (4 * b_y * Math.pow(d_y, 3));
         break;
       case "rigidity-modulus":
         const d_cyl = 4, l_wire = 60, r_wire = 0.05;
         result = (g_const * Math.pow(d_cyl, 4) * l_wire * regression.slope) / (Math.PI * Math.pow(r_wire, 4));
-        break;
-      case "surface-tension":
-        result = regression.slope; // Simplified
         break;
       case "newtons-rings":
         const R_opt = 100;
@@ -156,10 +128,7 @@ export default function ExperimentPage() {
 
   const handleExport = () => {
     window.print();
-    toast({
-      title: "Generating Report",
-      description: "Preparing your experiment report for print/PDF.",
-    });
+    toast({ title: "Generating Report", description: "Preparing your experiment report for print/PDF." });
   };
 
   return (
@@ -211,7 +180,6 @@ export default function ExperimentPage() {
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Aim</CardTitle></CardHeader>
                     <CardContent><p className="text-lg font-medium">{experiment.aim}</p></CardContent>
                   </Card>
-                  
                   <Card className="border-2 shadow-sm">
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Theory & Principle</CardTitle></CardHeader>
                     <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -222,7 +190,6 @@ export default function ExperimentPage() {
                     </CardContent>
                   </Card>
                 </div>
-                
                 <div className="space-y-6">
                   <Card className="border-2 shadow-sm">
                     <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Apparatus</CardTitle></CardHeader>
@@ -242,6 +209,39 @@ export default function ExperimentPage() {
             </TabsContent>
 
             <TabsContent value="observations" className="space-y-8 animate-in fade-in">
+              <div className="flex justify-end no-print">
+                <Dialog open={isSimulating} onOpenChange={setIsSimulating}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2 font-bold border-2 border-primary/30 hover:bg-primary/10">
+                      <Zap className="h-4 w-4 text-primary" /> SIMULATE SAMPLE DATA
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Simulate Observations</DialogTitle>
+                      <DialogDescription>
+                        Enter your desired principal result (e.g., target {experiment.unit}) to generate realistic laboratory readings.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="target" className="text-right">Principal Value</Label>
+                        <Input
+                          id="target"
+                          placeholder={experiment.standardValue?.toString() || "Target value"}
+                          className="col-span-3"
+                          value={simTarget}
+                          onChange={(e) => setSimTarget(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleSimulate} className="w-full">Generate Data</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
               {experiment.tables.map((table) => (
                 <Card key={table.id} className="border-2 shadow-lg">
                   <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50">
@@ -276,7 +276,6 @@ export default function ExperimentPage() {
                   />
                 ))}
               </div>
-              
               <Card className="border-4 border-primary/20 shadow-2xl mt-8">
                 <CardHeader className="bg-primary/5 border-b">
                   <CardTitle className="text-primary flex items-center gap-3 uppercase tracking-tighter font-black">
@@ -334,7 +333,6 @@ export default function ExperimentPage() {
                       <p className="text-2xl font-black bg-slate-900 text-white inline-block px-8 py-2">LABORATORY REPORT</p>
                     </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-8 mb-16 text-lg font-bold">
                     <div className="space-y-4">
                       <p className="border-b-2 border-slate-200 pb-1">NAME: <span className="text-slate-400">________________________</span></p>
@@ -346,18 +344,15 @@ export default function ExperimentPage() {
                       <p className="border-b-2 border-slate-200 pb-1">DATE: <span className="text-primary">{new Date().toLocaleDateString()}</span></p>
                     </div>
                   </div>
-
                   <div className="space-y-12 text-slate-900">
                     <section>
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">TITLE OF EXPERIMENT</h4>
                       <p className="text-3xl font-black uppercase leading-none">{experiment.title}</p>
                     </section>
-
                     <section>
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">OBJECTIVE / AIM</h4>
                       <p className="text-xl font-medium leading-relaxed">{experiment.aim}</p>
                     </section>
-
                     <section>
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">OBSERVATIONS & DATA</h4>
                       {experiment.tables.map((table) => (
@@ -395,7 +390,6 @@ export default function ExperimentPage() {
                         </div>
                       ))}
                     </section>
-
                     <section className="bg-slate-50 p-10 rounded-3xl border-2 border-slate-200">
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">FINAL DETERMINATION</h4>
                       <div className="space-y-6">
@@ -425,7 +419,6 @@ export default function ExperimentPage() {
                         )}
                       </div>
                     </section>
-
                     <div className="pt-24 flex justify-between font-black uppercase tracking-tighter">
                       <div className="text-center">
                         <p className="border-t-4 border-slate-900 pt-3 px-12">Signature of Student</p>
