@@ -83,7 +83,7 @@ export default function ExperimentPage() {
         }
         return point;
       })
-      .filter((p) => !isNaN(Number(p.x)));
+      .filter((p) => !isNaN(Number(p.x)) && p.x !== 0);
   };
 
   const calculatedResult = useMemo(() => {
@@ -209,26 +209,35 @@ export default function ExperimentPage() {
             </TabsContent>
 
             <TabsContent value="observations" className="space-y-8 animate-in fade-in">
-              <div className="flex justify-end no-print">
+              <div className="flex justify-between items-center no-print bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-500 p-2 rounded-lg">
+                    <Zap className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-xs uppercase tracking-widest text-amber-700 dark:text-amber-400">Dynamic Observation Generator</h4>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">Input your target result in the highlighted column to auto-generate measurement readings.</p>
+                  </div>
+                </div>
                 <Dialog open={isSimulating} onOpenChange={setIsSimulating}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="gap-2 font-bold border-2 border-primary/30 hover:bg-primary/10">
-                      <Zap className="h-4 w-4 text-primary" /> SIMULATE SAMPLE DATA
+                      <Zap className="h-4 w-4 text-primary" /> BULK SIMULATE
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Simulate Observations</DialogTitle>
+                      <DialogTitle>Bulk Data Simulation</DialogTitle>
                       <DialogDescription>
-                        Enter your desired principal result (e.g., target {experiment.unit}) to generate realistic laboratory readings.
+                        Generate an entire set of realistic readings based on one overall target value.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="target" className="text-right">Principal Value</Label>
+                        <Label htmlFor="target" className="text-right">Target Value</Label>
                         <Input
                           id="target"
-                          placeholder={experiment.standardValue?.toString() || "Target value"}
+                          placeholder={experiment.standardValue?.toString() || "Result"}
                           className="col-span-3"
                           value={simTarget}
                           onChange={(e) => setSimTarget(e.target.value)}
@@ -236,20 +245,23 @@ export default function ExperimentPage() {
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button onClick={handleSimulate} className="w-full">Generate Data</Button>
+                      <Button onClick={handleSimulate} className="w-full">Generate Entire Table</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>
 
               {experiment.tables.map((table) => (
-                <Card key={table.id} className="border-2 shadow-lg">
+                <Card key={table.id} className="border-2 shadow-lg overflow-hidden">
                   <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50">
                     <CardTitle className="text-sm uppercase tracking-widest font-black">{table.label}</CardTitle>
-                    <CardDescription className="font-medium">Enter your laboratory readings below.</CardDescription>
+                    <CardDescription className="font-medium">Enter target principal values per row or individual raw readings.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <ObservationTable 
+                      experimentId={experiment.id}
+                      tableId={table.id}
+                      principalConfig={table.principal}
                       columns={table.columns} 
                       data={tableData[table.id] || []} 
                       onChange={(newData) => handleTableChange(table.id, newData)} 
@@ -419,7 +431,7 @@ export default function ExperimentPage() {
                         )}
                       </div>
                     </section>
-                    <div className="pt-24 flex justify-between font-black uppercase tracking-tighter">
+                    <div className="pt-24 flex justify-between font-black uppercase tracking-tighter no-print">
                       <div className="text-center">
                         <p className="border-t-4 border-slate-900 pt-3 px-12">Signature of Student</p>
                       </div>

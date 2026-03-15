@@ -4,6 +4,11 @@ export type TableDefinition = {
   label: string;
   columns: TableHeader[];
   defaultRows?: number;
+  principal?: {
+    key: string;
+    label: string;
+    unit?: string;
+  };
 };
 
 export type GraphDefinition = {
@@ -57,6 +62,7 @@ export const experiments: Experiment[] = [
         id: "time-measurement",
         label: "Table 1: Time Measurement (20 Oscillations)",
         defaultRows: 19,
+        principal: { key: "g_target", label: "Target g", unit: "cm/s²" },
         columns: [
           { key: "hole_no", label: "Hole No" },
           { key: "dist_cg", label: "Dist from CG", unit: "cm" },
@@ -152,6 +158,7 @@ export const experiments: Experiment[] = [
         id: "depression",
         label: "Table 3: Load vs Depression",
         defaultRows: 6,
+        principal: { key: "Y_target", label: "Target Y", unit: "dyne/cm²" },
         columns: [
           { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "gm" },
@@ -232,6 +239,7 @@ export const experiments: Experiment[] = [
         id: "twist",
         label: "Table 3: Load vs Twist",
         defaultRows: 6,
+        principal: { key: "eta_target", label: "Target η", unit: "dyne/cm²" },
         columns: [
           { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "kg" },
@@ -302,6 +310,7 @@ export const experiments: Experiment[] = [
         id: "final-calc",
         label: "Table 3: Final Calculation",
         defaultRows: 3,
+        principal: { key: "T_target", label: "Target T", unit: "dyne/cm" },
         columns: [
           { key: "tube", label: "Tube" },
           { key: "h", label: "Height h", unit: "cm" },
@@ -349,6 +358,7 @@ export const experiments: Experiment[] = [
         id: "law-length",
         label: "Table 1: Frequency vs Length (Constant Weight)",
         defaultRows: 5,
+        principal: { key: "n_target", label: "Target n", unit: "Hz" },
         columns: [
           { key: "obs_no", label: "Obs" },
           { key: "freq", label: "Frequency n", unit: "Hz" },
@@ -363,6 +373,7 @@ export const experiments: Experiment[] = [
         id: "law-tension",
         label: "Table 2: Tension vs Length (Constant Frequency)",
         defaultRows: 5,
+        principal: { key: "n_target", label: "Target n", unit: "Hz" },
         columns: [
           { key: "obs_no", label: "Obs" },
           { key: "tension", label: "Tension T", unit: "N" },
@@ -424,6 +435,7 @@ export const experiments: Experiment[] = [
         id: "rings",
         label: "Observation Table (10 Rings)",
         defaultRows: 10,
+        principal: { key: "lambda_target", label: "Target λ", unit: "Å" },
         columns: [
           { key: "ring_no", label: "Ring No" },
           { key: "initial", label: "Initial Reading", unit: "cm" },
@@ -472,6 +484,7 @@ export const experiments: Experiment[] = [
         id: "laser-obs",
         label: "Observation Table",
         defaultRows: 8,
+        principal: { key: "lambda_target", label: "Target λ", unit: "Å" },
         columns: [
           { key: "obs", label: "Obs" },
           { key: "lines", label: "Lines/cm" },
@@ -520,6 +533,7 @@ export const experiments: Experiment[] = [
         id: "rc-data",
         label: "Time-Voltage Table",
         defaultRows: 20,
+        principal: { key: "tau_target", label: "Target τ", unit: "s" },
         columns: [
           { key: "time", label: "Time", unit: "s" },
           { key: "v_charge", label: "Charging Voltage", unit: "V" },
@@ -576,6 +590,7 @@ export const experiments: Experiment[] = [
         id: "input-char",
         label: "Table 1: Input Characteristics",
         defaultRows: 10,
+        principal: { key: "Ri_target", label: "Target Ri", unit: "Ω" },
         columns: [
           { key: "vbe", label: "VBE", unit: "V" },
           { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
@@ -587,6 +602,7 @@ export const experiments: Experiment[] = [
         id: "output-char",
         label: "Table 2: Output Characteristics",
         defaultRows: 10,
+        principal: { key: "Ro_target", label: "Target Ro", unit: "Ω" },
         columns: [
           { key: "vce", label: "VCE", unit: "V" },
           { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
@@ -655,6 +671,7 @@ export const experiments: Experiment[] = [
         id: "resistance",
         label: "Observation Table (10 Observations)",
         defaultRows: 10,
+        principal: { key: "Q_target", label: "Target Q", unit: "Ω" },
         columns: [
           { key: "obs", label: "Obs" },
           { key: "res_p", label: "Resistance P", unit: "Ω" },
@@ -700,6 +717,7 @@ export const experiments: Experiment[] = [
         id: "characteristics",
         label: "V-I Characteristics (10 Readings)",
         defaultRows: 10,
+        principal: { key: "knee_target", label: "Target Knee V", unit: "V" },
         columns: [
           { key: "v_f", label: "Forward Voltage", unit: "V" },
           { key: "i_f", label: "Forward Current", unit: "mA" },

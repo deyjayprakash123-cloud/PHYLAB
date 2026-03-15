@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Zap } from "lucide-react";
+import { generateRowFromPrincipal } from "@/lib/utils/physics-calc";
 
 interface Column {
   key: string;
@@ -13,14 +13,20 @@ interface Column {
 }
 
 interface ObservationTableProps {
+  experimentId: string;
+  tableId: string;
+  principalConfig?: { key: string; label: string; unit?: string };
   columns: Column[];
   data: any[];
   onChange: (newData: any[]) => void;
 }
 
-export function ObservationTable({ columns, data, onChange }: ObservationTableProps) {
+export function ObservationTable({ experimentId, tableId, principalConfig, columns, data, onChange }: ObservationTableProps) {
   const addRow = () => {
     const newRow = columns.reduce((acc, col) => ({ ...acc, [col.key]: "" }), {});
+    if (principalConfig) {
+      newRow[principalConfig.key] = "";
+    }
     onChange([...data, newRow]);
   };
 
@@ -35,16 +41,36 @@ export function ObservationTable({ columns, data, onChange }: ObservationTablePr
     onChange(newData);
   };
 
+  const handlePrincipalChange = (index: number, value: string) => {
+    const numVal = parseFloat(value);
+    const newData = [...data];
+    if (isNaN(numVal)) {
+      newData[index][principalConfig!.key] = value;
+    } else {
+      const generatedRow = generateRowFromPrincipal(experimentId, tableId, numVal, index, data[index]);
+      newData[index] = generatedRow;
+    }
+    onChange(newData);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-12 text-center">#</TableHead>
+            <TableRow className="bg-slate-50 dark:bg-slate-900">
+              <TableHead className="w-12 text-center font-black">#</TableHead>
+              {principalConfig && (
+                <TableHead className="bg-primary/5 border-x-2 border-primary/20 w-40">
+                  <div className="flex items-center gap-2 text-primary font-black uppercase text-[10px] tracking-widest">
+                    <Zap className="h-3 w-3" /> {principalConfig.label}
+                  </div>
+                  {principalConfig.unit && <span className="text-[9px] text-muted-foreground">({principalConfig.unit})</span>}
+                </TableHead>
+              )}
               {columns.map((col) => (
-                <TableHead key={col.key}>
-                  {col.label} {col.unit && <span className="text-xs text-muted-foreground">({col.unit})</span>}
+                <TableHead key={col.key} className="font-bold text-[10px] uppercase tracking-tighter">
+                  {col.label} <br/> {col.unit && <span className="text-[9px] text-muted-foreground font-normal">({col.unit})</span>}
                 </TableHead>
               ))}
               <TableHead className="w-12"></TableHead>
@@ -52,17 +78,29 @@ export function ObservationTable({ columns, data, onChange }: ObservationTablePr
           </TableHeader>
           <TableBody>
             {data.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                <TableCell className="text-center text-muted-foreground font-mono">{rowIndex + 1}</TableCell>
+              <TableRow key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
+                <TableCell className="text-center text-muted-foreground font-mono text-xs">{rowIndex + 1}</TableCell>
+                {principalConfig && (
+                  <TableCell className="bg-primary/5 border-x-2 border-primary/10">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={row[principalConfig.key] || ""}
+                      onChange={(e) => handlePrincipalChange(rowIndex, e.target.value)}
+                      placeholder="Input Result"
+                      className="h-8 border-primary/30 focus-visible:ring-primary font-bold text-primary"
+                    />
+                  </TableCell>
+                )}
                 {columns.map((col) => (
                   <TableCell key={col.key}>
                     <Input
                       type="number"
                       step="any"
-                      value={row[col.key]}
+                      value={row[col.key] || ""}
                       onChange={(e) => handleCellChange(rowIndex, col.key, e.target.value)}
                       placeholder="0.00"
-                      className="h-8 border-none focus-visible:ring-1 focus-visible:ring-primary shadow-none bg-transparent"
+                      className="h-8 border-slate-200 dark:border-slate-800 focus-visible:ring-primary shadow-none bg-transparent font-mono text-xs"
                     />
                   </TableCell>
                 ))}
@@ -80,16 +118,16 @@ export function ObservationTable({ columns, data, onChange }: ObservationTablePr
             ))}
             {data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length + 2} className="text-center py-8 text-muted-foreground">
-                  No data points added yet.
+                <TableCell colSpan={(principalConfig ? 1 : 0) + columns.length + 2} className="text-center py-12 text-muted-foreground italic">
+                  No data points added yet. Use the principal input to auto-generate readings.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <Button onClick={addRow} variant="outline" className="w-full border-dashed border-2">
-        <Plus className="mr-2 h-4 w-4" /> Add Row
+      <Button onClick={addRow} variant="outline" className="w-full border-dashed border-2 font-bold uppercase text-[10px] tracking-widest py-6">
+        <Plus className="mr-2 h-4 w-4" /> Add Observation Row
       </Button>
     </div>
   );
