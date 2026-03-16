@@ -18,7 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Info, Settings2, RotateCcw, FileType } from "lucide-react";
+import { Download, Info, Settings2, RotateCcw, FileType, Activity } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface PhysicsGraphProps {
@@ -48,7 +48,6 @@ export function PhysicsGraph({
 }: PhysicsGraphProps) {
   const [clickedPoint, setClickedPoint] = useState<{ x: number; y: number; label?: string } | null>(null);
   
-  // Custom Scale State
   const [useCustomScale, setUseCustomScale] = useState(false);
   const [xScale, setXScale] = useState({ min: "", max: "" });
   const [yScale, setYScale] = useState({ min: "", max: "" });
@@ -87,10 +86,6 @@ export function PhysicsGraph({
       const seriesLabel = pointData.activePayload[0].name;
       
       setClickedPoint({ x: xVal, y: yVal, label: seriesLabel });
-      toast({
-        title: "Coordinate Selected",
-        description: `${xLabel}: ${xVal.toFixed(4)}${xUnit ? ` ${xUnit}` : ""}, ${yLabel}: ${yVal.toFixed(4)}${yUnit ? ` ${yUnit}` : ""}`,
-      });
     }
   };
 
@@ -124,23 +119,28 @@ export function PhysicsGraph({
     <Card className="border-2 overflow-hidden shadow-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
       <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <CardTitle className="text-xl font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tight">
-              {title}
-            </CardTitle>
-            <p className="text-xs text-muted-foreground font-medium mt-1 uppercase tracking-wider">Lab Station: Scientific Plotting Engine</p>
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/20 p-2 rounded-lg">
+              <Activity className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tight">
+                {title}
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Laboratory Plotting Engine</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 no-print">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-2 font-bold uppercase text-[10px] tracking-widest">
-                  <Settings2 className="h-3.5 w-3.5" /> Set Scale
+                  <Settings2 className="h-3.5 w-3.5" /> Scale
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-5 shadow-2xl" align="end">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-black text-xs uppercase tracking-widest">Manual Axis Control</h4>
+                    <h4 className="font-black text-xs uppercase tracking-widest">Axis Control</h4>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -154,7 +154,6 @@ export function PhysicsGraph({
                       <RotateCcw className="h-3 w-3 mr-1" /> RESET
                     </Button>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-[10px] uppercase font-black text-slate-500">X-Min</Label>
@@ -177,29 +176,6 @@ export function PhysicsGraph({
                       />
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] uppercase font-black text-slate-500">Y-Min</Label>
-                      <Input 
-                        type="number" 
-                        value={yScale.min} 
-                        onChange={(e) => { setYScale(prev => ({ ...prev, min: e.target.value })); setUseCustomScale(true); }}
-                        placeholder="Auto"
-                        className="h-9 text-xs font-mono"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] uppercase font-black text-slate-500">Y-Max</Label>
-                      <Input 
-                        type="number" 
-                        value={yScale.max} 
-                        onChange={(e) => { setYScale(prev => ({ ...prev, max: e.target.value })); setUseCustomScale(true); }}
-                        placeholder="Auto"
-                        className="h-9 text-xs font-mono"
-                      />
-                    </div>
-                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -213,82 +189,70 @@ export function PhysicsGraph({
         </div>
         
         {regression && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Regression Statistics</span>
-              <div className="flex gap-2">
-                <span className="text-[11px] font-mono font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20">
-                  SLOPE: {regression.slope.toFixed(4)}
-                </span>
-                <span className="text-[11px] font-mono font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                  EQN: {formattedEquation}
-                </span>
-                <span className="text-[11px] font-mono font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg border border-emerald-200">
-                  R²: {regression.r2.toFixed(4)}
-                </span>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <span className="text-[11px] font-mono font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20">
+              SLOPE: {regression.slope.toFixed(4)}
+            </span>
+            <span className="text-[11px] font-mono font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              EQN: {formattedEquation}
+            </span>
           </div>
         )}
       </CardHeader>
       
       <CardContent className="p-4 sm:p-10 bg-white dark:bg-slate-950">
-        <div className="h-[500px] w-full border border-slate-200 dark:border-slate-800 rounded-xl bg-white p-4">
+        <div className="h-[450px] w-full border border-slate-200 dark:border-slate-800 rounded-xl bg-white p-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={mergedData} 
               margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
               onClick={handlePointClick}
             >
-              <CartesianGrid strokeDasharray="1 1" vertical={true} horizontal={true} stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="1 1" vertical={true} horizontal={true} stroke="#f1f5f9" />
               <XAxis 
                 type="number" 
                 dataKey="x" 
                 name={xLabel} 
                 domain={xDomain as any}
                 allowDataOverflow={useCustomScale}
-                stroke="#000000"
-                tick={{fontSize: 11, fontWeight: 700, fill: '#000'}}
-                tickLine={{stroke: '#000'}}
+                stroke="#0f172a"
+                tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}}
                 label={{ 
                   value: `${xLabel}${xUnit ? ` (${xUnit})` : ""}`, 
                   position: 'bottom', 
                   offset: 40, 
-                  style: { fontWeight: 900, fontSize: 12, fill: '#000', textTransform: 'uppercase', letterSpacing: '0.05em' } 
+                  style: { fontWeight: 800, fontSize: 11, fill: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' } 
                 }}
               />
               <YAxis 
                 type="number" 
-                stroke="#000000"
+                stroke="#0f172a"
                 domain={yDomain as any}
                 allowDataOverflow={useCustomScale}
-                tick={{fontSize: 11, fontWeight: 700, fill: '#000'}}
-                tickLine={{stroke: '#000'}}
+                tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}}
                 label={{ 
                   value: `${yLabel}${yUnit ? ` (${yUnit})` : ""}`, 
                   angle: -90, 
                   position: 'insideLeft', 
                   offset: -45,
-                  style: { fontWeight: 900, fontSize: 12, fill: '#000', textTransform: 'uppercase', letterSpacing: '0.05em' }
+                  style: { fontWeight: 800, fontSize: 11, fill: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }
                 }}
               />
               <Tooltip 
-                cursor={{ stroke: '#000', strokeWidth: 1, strokeDasharray: '2 2' }}
+                cursor={{ stroke: '#94a3b8', strokeWidth: 1 }}
                 contentStyle={{ 
-                  borderRadius: '0px', 
-                  border: '2px solid #000', 
-                  boxShadow: '8px 8px 0px rgba(0,0,0,0.1)',
+                  borderRadius: '12px', 
+                  border: '2px solid #e2e8f0', 
                   padding: '12px',
-                  backgroundColor: '#fff'
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                 }}
-                labelStyle={{ fontWeight: '900', color: '#000', borderBottom: '1px solid #eee', paddingBottom: '4px', marginBottom: '8px' }}
-                itemStyle={{ fontWeight: '700', fontSize: '11px' }}
               />
               <Legend 
                 verticalAlign="top" 
                 height={40} 
-                iconType="circle"
-                wrapperStyle={{ paddingBottom: '20px', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}
+                wrapperStyle={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}
               />
 
               {multiSeries ? (
@@ -300,35 +264,31 @@ export function PhysicsGraph({
                     dataKey={series.key}
                     stroke={series.color}
                     strokeWidth={2}
-                    dot={{ r: 4, fill: series.color, stroke: "white", strokeWidth: 1.5 }}
+                    dot={{ r: 4, fill: series.color, stroke: "white", strokeWidth: 2 }}
                     activeDot={{ r: 6, strokeWidth: 0 }}
-                    animationDuration={1000}
-                    connectNulls
                   />
                 ))
               ) : (
                 <>
                   <Line
-                    name="Experimental Data"
+                    name="Readings"
                     type={type === "monotone" ? "monotone" : "linear"}
                     dataKey="y"
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
-                    dot={{ r: 5, fill: "hsl(var(--primary))", stroke: "#000", strokeWidth: 1 }}
-                    activeDot={{ r: 8, strokeWidth: 0 }}
-                    animationDuration={1200}
+                    dot={{ r: 4, fill: "hsl(var(--primary))", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
                   />
                   {type === "linear" && regression && (
                     <Line
-                      name="Best-Fit Line"
+                      name="Best Fit"
                       type="linear"
                       dataKey="bestFit"
                       stroke="#ef4444"
-                      strokeWidth={1.5}
-                      strokeDasharray="5 5"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
                       dot={false}
                       activeDot={false}
-                      animationDuration={800}
                     />
                   )}
                 </>
@@ -338,23 +298,22 @@ export function PhysicsGraph({
         </div>
         
         {clickedPoint && (
-          <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-900 rounded-none border-l-4 border-primary animate-in fade-in slide-in-from-left-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="bg-primary text-white p-2 rounded-none">
-                  <Info className="h-5 w-5" />
+          <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border-l-4 border-primary animate-in fade-in slide-in-from-left-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                  <Info className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Point Coordinates</p>
-                  <p className="text-lg font-mono font-black text-slate-900 dark:text-white">
-                    {clickedPoint.label && <span className="text-primary mr-2">[{clickedPoint.label}]</span>}
-                    {xLabel.split(' ')[0]}: <span className="text-primary">{clickedPoint.x.toFixed(4)}</span>
-                    <span className="mx-4 text-slate-300">|</span>
-                    {yLabel.split(' ')[0]}: <span className="text-primary">{clickedPoint.y.toFixed(4)}</span>
+                  <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Selected Coordinate</p>
+                  <p className="text-sm font-mono font-black text-slate-900 dark:text-white">
+                    X: <span className="text-primary">{clickedPoint.x.toFixed(4)}</span>
+                    <span className="mx-3 text-slate-300">|</span>
+                    Y: <span className="text-primary">{clickedPoint.y.toFixed(4)}</span>
                   </p>
                 </div>
               </div>
-              <Button variant="link" onClick={() => setClickedPoint(null)} className="text-[10px] font-black uppercase text-slate-400">Clear Marker</Button>
+              <Button variant="ghost" size="sm" onClick={() => setClickedPoint(null)} className="h-7 text-[9px] font-black uppercase text-slate-400 hover:text-primary">Clear</Button>
             </div>
           </div>
         )}

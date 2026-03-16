@@ -8,12 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ObservationTable } from "@/components/ObservationTable";
 import { PhysicsGraph } from "@/components/PhysicsGraph";
-import { calculatePercentageError, calculateLinearRegression, generateSimulatedData, type DataPoint } from "@/lib/utils/physics-calc";
-import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, MessageSquareQuote, Zap } from "lucide-react";
+import { calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
+import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, Zap, Settings } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -23,8 +22,7 @@ export default function ExperimentPage() {
 
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState("overview");
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simTarget, setSimTarget] = useState("");
+  const [standardValue, setStandardValue] = useState(experiment?.standardValue || 0);
 
   useEffect(() => {
     if (experiment && Object.keys(tableData).length === 0) {
@@ -56,18 +54,6 @@ export default function ExperimentPage() {
     setTableData(prev => ({ ...prev, [tableId]: newData }));
   };
 
-  const handleSimulate = () => {
-    const target = parseFloat(simTarget);
-    if (isNaN(target)) {
-      toast({ variant: "destructive", title: "Invalid Input", description: "Please enter a valid numeric target value." });
-      return;
-    }
-    const simulated = generateSimulatedData(experiment.id, target);
-    setTableData(simulated);
-    setIsSimulating(false);
-    toast({ title: "Data Generated", description: `Simulated observations for target value: ${target}` });
-  };
-
   const getGraphData = (graphDef: any): DataPoint[] => {
     const currentData = tableData[graphDef.tableId] || [];
     return currentData
@@ -83,7 +69,7 @@ export default function ExperimentPage() {
         }
         return point;
       })
-      .filter((p) => !isNaN(Number(p.x)) && p.x !== 0);
+      .filter((p) => !isNaN(Number(p.x)));
   };
 
   const calculatedResult = useMemo(() => {
@@ -92,6 +78,7 @@ export default function ExperimentPage() {
     const data = getGraphData(mainGraph);
     if (data.length < 2) return null;
     const regression = calculateLinearRegression(data);
+    
     let result = 0;
     const g_const = 981;
 
@@ -122,9 +109,9 @@ export default function ExperimentPage() {
   }, [experiment.id, tableData, experiment.graphs]);
 
   const error = useMemo(() => {
-    if (calculatedResult === null || !experiment.standardValue) return null;
-    return calculatePercentageError(calculatedResult, experiment.standardValue);
-  }, [calculatedResult, experiment.standardValue]);
+    if (calculatedResult === null || !standardValue) return null;
+    return calculatePercentageError(calculatedResult, standardValue);
+  }, [calculatedResult, standardValue]);
 
   const handleExport = () => {
     window.print();
@@ -149,18 +136,28 @@ export default function ExperimentPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="printable-area space-y-8">
-          <header className="space-y-2 bg-white dark:bg-slate-900 p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
+          <header className="space-y-4 bg-white dark:bg-slate-900 p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="flex-1">
                 <h1 className="text-4xl font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tighter">{experiment.title}</h1>
                 <p className="text-slate-500 font-bold text-sm tracking-widest mt-2 uppercase">OUTR B.Tech Physics Laboratory Manual</p>
               </div>
-              {experiment.standardValue && (
-                <div className="bg-primary/5 p-5 rounded-2xl border-2 border-primary/20 no-print">
-                  <p className="text-[10px] uppercase tracking-[0.2em] font-black text-primary mb-1">Standard Value</p>
-                  <p className="text-2xl font-mono font-black text-slate-900 dark:text-white">{experiment.standardValue} <span className="text-sm font-bold text-slate-500">{experiment.unit}</span></p>
+              <div className="bg-primary/5 p-6 rounded-2xl border-2 border-primary/20 no-print min-w-[240px]">
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="std-val" className="text-[10px] uppercase tracking-widest font-black text-primary">Standard Value</Label>
+                  <Settings className="h-3 w-3 text-primary/50" />
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="std-val"
+                    type="number" 
+                    value={standardValue} 
+                    onChange={(e) => setStandardValue(parseFloat(e.target.value) || 0)}
+                    className="h-10 text-xl font-mono font-black border-none bg-transparent p-0 focus-visible:ring-0 w-full"
+                  />
+                  <span className="text-sm font-bold text-slate-500">{experiment.unit}</span>
+                </div>
+              </div>
             </div>
           </header>
 
@@ -209,61 +206,29 @@ export default function ExperimentPage() {
             </TabsContent>
 
             <TabsContent value="observations" className="space-y-8 animate-in fade-in">
-              <div className="flex justify-between items-center no-print bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50">
-                <div className="flex items-center gap-3">
-                  <div className="bg-amber-500 p-2 rounded-lg">
-                    <Zap className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-xs uppercase tracking-widest text-amber-700 dark:text-amber-400">Dynamic Observation Generator</h4>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">Input your target result in the highlighted column to auto-generate measurement readings.</p>
-                  </div>
+              <div className="no-print bg-primary/5 p-4 rounded-xl border border-primary/20 flex items-center gap-3">
+                <div className="bg-primary text-white p-2 rounded-lg">
+                  <Zap className="h-5 w-5" />
                 </div>
-                <Dialog open={isSimulating} onOpenChange={setIsSimulating}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2 font-bold border-2 border-primary/30 hover:bg-primary/10">
-                      <Zap className="h-4 w-4 text-primary" /> BULK SIMULATE
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Bulk Data Simulation</DialogTitle>
-                      <DialogDescription>
-                        Generate an entire set of realistic readings based on one overall target value.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="target" className="text-right">Target Value</Label>
-                        <Input
-                          id="target"
-                          placeholder={experiment.standardValue?.toString() || "Result"}
-                          className="col-span-3"
-                          value={simTarget}
-                          onChange={(e) => setSimTarget(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={handleSimulate} className="w-full">Generate Entire Table</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <div>
+                  <h4 className="font-black text-xs uppercase tracking-widest text-primary">AI Observation Integration</h4>
+                  <p className="text-[10px] text-slate-500 font-medium">Input values into the highlighted column to automatically generate raw readings based on the standard value.</p>
+                </div>
               </div>
 
               {experiment.tables.map((table) => (
                 <Card key={table.id} className="border-2 shadow-lg overflow-hidden">
                   <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50">
                     <CardTitle className="text-sm uppercase tracking-widest font-black">{table.label}</CardTitle>
-                    <CardDescription className="font-medium">Enter target principal values per row or individual raw readings.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <ObservationTable 
                       experimentId={experiment.id}
                       tableId={table.id}
-                      principalConfig={table.principal}
+                      aiInputKey={table.aiInputKey}
                       columns={table.columns} 
                       data={tableData[table.id] || []} 
+                      standardValue={standardValue}
                       onChange={(newData) => handleTableChange(table.id, newData)} 
                     />
                   </CardContent>
@@ -317,7 +282,7 @@ export default function ExperimentPage() {
             <TabsContent value="questions" className="space-y-6 animate-in fade-in">
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3 mb-8">
-                  <MessageSquareQuote className="h-8 w-8 text-primary" />
+                  <HelpCircle className="h-8 w-8 text-primary" />
                   <h2 className="text-2xl font-black uppercase tracking-tight">Viva-Voce Questions</h2>
                 </div>
                 <Accordion type="single" collapsible className="w-full space-y-4">
@@ -394,7 +359,7 @@ export default function ExperimentPage() {
                                   </tr>
                                 ))}
                                 {(!tableData[table.id] || tableData[table.id].length === 0) && (
-                                  <tr><td colSpan={table.columns.length + 1} className="p-8 text-center text-slate-400 italic">DATA REQUIRED FOR GENERATION</td></tr>
+                                  <tr><td colSpan={table.columns.length + 1} className="p-8 text-center text-slate-400 italic">NO DATA RECORDED</td></tr>
                                 )}
                               </tbody>
                             </table>
@@ -405,7 +370,6 @@ export default function ExperimentPage() {
                     <section className="bg-slate-50 p-10 rounded-3xl border-2 border-slate-200">
                       <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">FINAL DETERMINATION</h4>
                       <div className="space-y-6">
-                        <p className="text-lg">Based on experimental observations and analysis, the physical constant is determined as:</p>
                         <div className="grid grid-cols-2 gap-8">
                           <div className="space-y-2">
                             <p className="text-[10px] uppercase font-black text-slate-400">Observed Value</p>
@@ -413,14 +377,12 @@ export default function ExperimentPage() {
                               {calculatedResult ? calculatedResult.toFixed(4) : "__________"} {experiment.unit}
                             </p>
                           </div>
-                          {experiment.standardValue && (
-                            <div className="space-y-2">
-                              <p className="text-[10px] uppercase font-black text-slate-400">Standard Value</p>
-                              <p className="text-4xl font-black text-slate-500">
-                                {experiment.standardValue} {experiment.unit}
-                              </p>
-                            </div>
-                          )}
+                          <div className="space-y-2">
+                            <p className="text-[10px] uppercase font-black text-slate-400">Standard Value</p>
+                            <p className="text-4xl font-black text-slate-500">
+                              {standardValue} {experiment.unit}
+                            </p>
+                          </div>
                         </div>
                         {error !== null && (
                           <div className="pt-6 border-t-2 border-slate-200">

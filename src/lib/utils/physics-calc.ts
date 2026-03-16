@@ -1,7 +1,7 @@
 export type DataPoint = {
   x: number;
   y: number;
-  [key: string]: number | string; // Allow for multi-series keys
+  [key: string]: number | string; 
 };
 
 export function calculateLinearRegression(data: DataPoint[]) {
@@ -49,40 +49,52 @@ const addNoise = (val: number, percent = 0.02) => {
   return val * factor;
 };
 
-export function generateRowFromPrincipal(experimentId: string, tableId: string, principalValue: number, rowIndex: number, existingRow: any): any {
+export function generateRowFromInput(
+  experimentId: string, 
+  tableId: string, 
+  inputKey: string, 
+  inputValue: string, 
+  standardValue: number,
+  existingRow: any
+): any {
+  const val = parseFloat(inputValue);
+  if (isNaN(val)) return { ...existingRow, [inputKey]: inputValue };
+
+  const g_acc = 981;
+
   switch (experimentId) {
     case 'bar-pendulum': {
-      if (tableId === 'time-measurement') {
-        const g = principalValue;
-        const L = parseFloat(existingRow.dist_cg) || 5 + rowIndex * 5;
+      if (inputKey === 'dist_cg') {
+        const L = val;
+        const g = standardValue;
         const T_theoretical = 2 * Math.PI * Math.sqrt(L / g);
         const t_total = T_theoretical * 20;
         const t1 = addNoise(t_total, 0.01).toFixed(2);
-        const t2 = addNoise(t_total, 0.01).toFixed(2);
+        const t2 = t_total.toFixed(2);
         const t3 = addNoise(t_total, 0.01).toFixed(2);
         const mean = ((parseFloat(t1) + parseFloat(t2) + parseFloat(t3)) / 3).toFixed(2);
+        const T_calc = (parseFloat(mean) / 20);
         return {
           ...existingRow,
-          g_target: principalValue.toString(),
-          dist_cg: L.toString(),
+          dist_cg: inputValue,
           t1, t2, t3,
           mean_t: mean,
-          T: (parseFloat(mean) / 20).toFixed(3)
+          T: T_calc.toFixed(3),
+          T2: (T_calc * T_calc).toFixed(4)
         };
       }
       break;
     }
     case 'youngs-modulus': {
-      if (tableId === 'depression') {
-        const Y = principalValue;
-        const M = parseFloat(existingRow.load) || rowIndex * 500;
-        const l = 60, b = 2, d = 0.5, g_acc = 981;
+      if (tableId === 'depression' && inputKey === 'load') {
+        const M = val;
+        const Y = standardValue;
+        const l = 60, b = 2, d = 0.5;
         const delta_base = (M * g_acc * Math.pow(l, 3)) / (4 * b * Math.pow(d, 3) * Y);
         const delta = addNoise(delta_base, 0.02);
         return {
           ...existingRow,
-          Y_target: principalValue.toString(),
-          load: M.toString(),
+          load: inputValue,
           inc: addNoise(delta, 0.01).toFixed(3),
           dec: addNoise(delta, 0.01).toFixed(3),
           mean: delta.toFixed(3),
@@ -92,17 +104,16 @@ export function generateRowFromPrincipal(experimentId: string, tableId: string, 
       break;
     }
     case 'rigidity-modulus': {
-      if (tableId === 'twist') {
-        const eta = principalValue;
-        const M = parseFloat(existingRow.load) || 0.5 + rowIndex * 0.5;
-        const l = 60, r = 0.05, d_cyl = 4, g_acc = 981;
+      if (tableId === 'twist' && inputKey === 'load') {
+        const M = val;
+        const eta = standardValue;
+        const l = 60, r = 0.05, d_cyl = 4;
         const theta_rad = (M * 1000 * g_acc * d_cyl * l) / (Math.PI * Math.pow(r, 4) * eta);
         const theta_deg = theta_rad * (180 / Math.PI);
         const theta = addNoise(theta_deg, 0.03);
         return {
           ...existingRow,
-          eta_target: principalValue.toString(),
-          load: M.toString(),
+          load: inputValue,
           inc: addNoise(theta, 0.01).toFixed(2),
           dec: addNoise(theta, 0.01).toFixed(2),
           mean: theta.toFixed(2),
@@ -112,142 +123,155 @@ export function generateRowFromPrincipal(experimentId: string, tableId: string, 
       break;
     }
     case 'surface-tension': {
-      if (tableId === 'final-calc') {
-        const T_target = principalValue;
-        const r = parseFloat(existingRow.r) || 0.02 + rowIndex * 0.01;
-        const rho = 1, g_acc = 981;
-        const h_base = (2 * T_target) / (r * rho * g_acc);
+      if (inputKey === 'r') {
+        const r = val;
+        const T = standardValue;
+        const h_base = (2 * T) / (r * 1 * g_acc);
         const h = addNoise(h_base, 0.02);
         return {
           ...existingRow,
-          T_target: principalValue.toString(),
-          r: r.toString(),
+          r: inputValue,
           h: h.toFixed(2),
           inv_r: (1/r).toFixed(2),
-          T: T_target.toFixed(2)
+          T: standardValue.toFixed(2)
         };
       }
       break;
     }
     case 'sonometer': {
-      const n_target = principalValue;
-      const m_linear = 0.01;
-      if (tableId === 'law-length') {
-        const freq = parseFloat(existingRow.freq) || 256 + rowIndex * 64;
-        const l_base = (1 / (2 * freq)) * Math.sqrt(98000 / m_linear);
+      if (inputKey === 'freq') {
+        const n = val;
+        const T = 98000; // Constant Tension
+        const m_lin = 0.01;
+        const l_base = (1 / (2 * n)) * Math.sqrt(T / m_lin);
         const l = addNoise(l_base, 0.02);
         return {
           ...existingRow,
-          n_target: principalValue.toString(),
-          freq: freq.toString(),
-          inc: addNoise(l, 0.005).toFixed(2),
-          dec: addNoise(l, 0.005).toFixed(2),
+          freq: inputValue,
+          inc: addNoise(l, 0.01).toFixed(2),
+          dec: addNoise(l, 0.01).toFixed(2),
           mean_l: l.toFixed(2),
-          inv_l: (1 / l).toFixed(4),
-          nl: (freq * l).toFixed(2)
+          inv_l: (1/l).toFixed(4)
         };
-      } else if (tableId === 'law-tension') {
-        const T = parseFloat(existingRow.tension) || 1 + rowIndex; // kg
-        const T_dyn = T * 981;
-        const l_base = (1 / (2 * n_target)) * Math.sqrt(T_dyn / m_linear);
+      } else if (inputKey === 'tension') {
+        const T = val * g_acc;
+        const n = standardValue;
+        const m_lin = 0.01;
+        const l_base = (1 / (2 * n)) * Math.sqrt(T / m_lin);
         const l = addNoise(l_base, 0.02);
         return {
           ...existingRow,
-          n_target: principalValue.toString(),
-          tension: T.toString(),
-          inc: addNoise(l, 0.005).toFixed(2),
-          dec: addNoise(l, 0.005).toFixed(2),
+          tension: inputValue,
+          inc: addNoise(l, 0.01).toFixed(2),
+          dec: addNoise(l, 0.01).toFixed(2),
           mean_l: l.toFixed(2),
-          l2: (l * l).toFixed(2),
-          T_l2: (T_dyn / (l * l)).toFixed(6),
-          sqrt_T: Math.sqrt(T_dyn).toFixed(3)
+          sqrt_T: Math.sqrt(T).toFixed(2)
         };
       }
       break;
     }
     case 'newtons-rings': {
-      const lambda = principalValue * 1e-8;
-      const R = 100;
-      const n = parseFloat(existingRow.ring_no) || 2 + rowIndex * 2;
-      const D_base = Math.sqrt(4 * R * lambda * n);
-      const D = addNoise(D_base, 0.015);
-      return {
-        ...existingRow,
-        lambda_target: principalValue.toString(),
-        ring_no: n.toString(),
-        initial: "0.000",
-        final: D.toFixed(4),
-        diameter: D.toFixed(4),
-        d2: (D * D).toFixed(5)
-      };
+      if (inputKey === 'ring_no') {
+        const n = val;
+        const lambda = standardValue * 1e-8;
+        const R = 100;
+        const D_base = Math.sqrt(4 * R * lambda * n);
+        const D = addNoise(D_base, 0.015);
+        return {
+          ...existingRow,
+          ring_no: inputValue,
+          initial: "0.000",
+          final: D.toFixed(4),
+          diameter: D.toFixed(4),
+          d2: (D * D).toFixed(5)
+        };
+      }
+      break;
     }
     case 'laser-wavelength': {
-      const lambda = principalValue * 1e-8;
-      const d_grating = 1 / 600;
-      const D_screen = 100;
-      const m = parseFloat(existingRow.order) || 1 + Math.floor(rowIndex / 2);
-      const sinTheta = (m * lambda) / d_grating;
-      const theta = Math.asin(sinTheta);
-      const y_val = D_screen * Math.tan(theta);
-      const y_noisy = addNoise(y_val, 0.02);
-      return {
-        ...existingRow,
-        lambda_target: principalValue.toString(),
-        lines: "600",
-        grating: d_grating.toFixed(6),
-        order: m.toString(),
-        y: y_noisy.toFixed(3),
-        D: D_screen.toString(),
-        sin_theta: (y_noisy / Math.sqrt(y_noisy * y_noisy + D_screen * D_screen)).toFixed(5),
-        lambda: principalValue.toString()
-      };
+      if (inputKey === 'order') {
+        const m = val;
+        const lambda = standardValue * 1e-8;
+        const d_grating = 1 / 600;
+        const D_screen = 100;
+        const sinTheta = (m * lambda) / d_grating;
+        const theta = Math.asin(sinTheta);
+        const y_val = D_screen * Math.tan(theta);
+        const y = addNoise(y_val, 0.02);
+        return {
+          ...existingRow,
+          order: inputValue,
+          y: y.toFixed(3),
+          D: D_screen.toString(),
+          sin_theta: (y / Math.sqrt(y * y + D_screen * D_screen)).toFixed(5),
+          lambda: standardValue.toString()
+        };
+      }
+      break;
     }
     case 'rc-circuit': {
-      const tau = principalValue;
-      const V0 = 5;
-      const t = parseFloat(existingRow.time) || (rowIndex + 1) * 2;
-      const Vc = V0 * (1 - Math.exp(-t / tau));
-      const Vd = V0 * Math.exp(-t / tau);
-      return {
-        ...existingRow,
-        tau_target: principalValue.toString(),
-        time: t.toString(),
-        v_charge: addNoise(Vc, 0.015).toFixed(3),
-        v_discharge: addNoise(Vd, 0.015).toFixed(3)
-      };
+      if (inputKey === 'time') {
+        const t = val;
+        const tau = standardValue;
+        const V0 = 5;
+        const Vc = V0 * (1 - Math.exp(-t / tau));
+        const Vd = V0 * Math.exp(-t / tau);
+        return {
+          ...existingRow,
+          time: inputValue,
+          v_charge: addNoise(Vc, 0.01).toFixed(3),
+          v_discharge: addNoise(Vd, 0.01).toFixed(3)
+        };
+      }
+      break;
+    }
+    case 'bjt-ce': {
+      if (inputKey === 'vbe') {
+        const vbe = val;
+        const beta = 150;
+        const vt = 0.026;
+        const is = 1e-12;
+        const ib = is * (Math.exp(vbe / vt) - 1) * 1e6;
+        return {
+          ...existingRow,
+          vbe: inputValue,
+          ib_1v: addNoise(ib, 0.05).toFixed(2),
+          ib_4v: addNoise(ib * 1.1, 0.05).toFixed(2),
+          ib_8v: addNoise(ib * 1.2, 0.05).toFixed(2)
+        };
+      }
+      break;
     }
     case 'metre-bridge': {
-      const Q_target = principalValue;
-      const P = parseFloat(existingRow.res_p) || 2 + rowIndex * 3;
-      const l1_theoretical = (100 * P) / (P + Q_target);
-      const l1 = addNoise(l1_theoretical, 0.01);
-      return {
-        ...existingRow,
-        Q_target: principalValue.toString(),
-        res_p: P.toString(),
-        l1: l1.toFixed(2),
-        l2: (100 - l1).toFixed(2),
-        q: Q_target.toFixed(2)
-      };
+      if (inputKey === 'res_p') {
+        const P = val;
+        const Q = standardValue;
+        const l1 = (100 * P) / (P + Q);
+        const l1_noisy = addNoise(l1, 0.01);
+        return {
+          ...existingRow,
+          res_p: inputValue,
+          l1: l1_noisy.toFixed(2),
+          l2: (100 - l1_noisy).toFixed(2)
+        };
+      }
+      break;
+    }
+    case 'pn-junction': {
+      if (inputKey === 'v_f') {
+        const v = val;
+        const vt = 0.026;
+        const is = 1e-9;
+        const i = is * (Math.exp(v / (1.5 * vt)) - 1) * 1e3;
+        return {
+          ...existingRow,
+          v_f: inputValue,
+          i_f: addNoise(i, 0.05).toFixed(3)
+        };
+      }
+      break;
     }
   }
-  return existingRow;
-}
 
-export function generateSimulatedData(experimentId: string, principalValue: number): Record<string, any[]> {
-  const data: Record<string, any[]> = {};
-  const exp = experiments.find(e => e.id === experimentId);
-  if (!exp) return {};
-
-  exp.tables.forEach(table => {
-    const rows = [];
-    const numRows = table.defaultRows || 5;
-    for (let i = 0; i < numRows; i++) {
-      const initialRow = table.columns.reduce((acc, col) => ({ ...acc, [col.key]: "" }), {});
-      rows.push(generateRowFromPrincipal(experimentId, table.id, principalValue, i, initialRow));
-    }
-    data[table.id] = rows;
-  });
-
-  return data;
+  return { ...existingRow, [inputKey]: inputValue };
 }
