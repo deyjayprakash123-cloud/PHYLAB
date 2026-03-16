@@ -1,9 +1,18 @@
 export type TableHeader = { key: string; label: string; unit?: string };
+
+export type AIInputField = {
+  key: string;
+  label: string;
+  unit?: string;
+  description?: string;
+};
+
 export type TableDefinition = {
   id: string;
   label: string;
   columns: TableHeader[];
   defaultRows?: number;
+  aiInputFields?: AIInputField[];
 };
 
 export type GraphDefinition = {
@@ -39,7 +48,6 @@ export type Experiment = {
   tables: TableDefinition[];
   graphs: GraphDefinition[];
   questions: Question[];
-  aiInputFields: { key: string; label: string; unit?: string }[];
 };
 
 export const experiments: Experiment[] = [
@@ -53,10 +61,6 @@ export const experiments: Experiment[] = [
     formula: "g = 4π²L / T²",
     standardValue: 981,
     unit: "cm/s²",
-    aiInputFields: [
-      { key: "hole_no", label: "Hole No" },
-      { key: "dist_cg", label: "Dist from CG", unit: "cm" }
-    ],
     tables: [
       {
         id: "time-measurement",
@@ -70,6 +74,10 @@ export const experiments: Experiment[] = [
           { key: "t3", label: "t3", unit: "s" },
           { key: "mean_t", label: "Mean t", unit: "s" },
           { key: "T", label: "T = t/20", unit: "s" }
+        ],
+        aiInputFields: [
+          { key: "hole_no", label: "Hole No" },
+          { key: "dist_cg", label: "Dist from CG", unit: "cm" }
         ]
       },
       {
@@ -82,6 +90,10 @@ export const experiments: Experiment[] = [
           { key: "T", label: "Time Period T", unit: "s" },
           { key: "T2", label: "T²", unit: "s²" },
           { key: "L_T2", label: "L/T²", unit: "cm/s²" }
+        ],
+        aiInputFields: [
+          { key: "L", label: "Equivalent Length L", unit: "cm" },
+          { key: "T", label: "Time Period T", unit: "s" }
         ]
       }
     ],
@@ -120,9 +132,6 @@ export const experiments: Experiment[] = [
     formula: "Y = (M·g·l³) / (4·b·d³·δ)",
     standardValue: 1.2e11,
     unit: "dyne/cm²",
-    aiInputFields: [
-      { key: "load", label: "Load", unit: "gm" }
-    ],
     tables: [
       {
         id: "thickness",
@@ -138,6 +147,9 @@ export const experiments: Experiment[] = [
           { key: "diff", label: "Diff(I-F)" },
           { key: "csr", label: "CSR", unit: "cm" },
           { key: "total", label: "Total Reading", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "lc", label: "Least Count", unit: "cm" }
         ]
       },
       {
@@ -150,6 +162,9 @@ export const experiments: Experiment[] = [
           { key: "vc", label: "VC" },
           { key: "vsr", label: "VSR", unit: "cm" },
           { key: "total", label: "MSR + VSR", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "msr", label: "Main Scale Reading", unit: "cm" }
         ]
       },
       {
@@ -168,6 +183,9 @@ export const experiments: Experiment[] = [
           { key: "total_dec", label: "Total (b)", unit: "cm" },
           { key: "mean", label: "Mean (a+b)/2", unit: "cm" },
           { key: "depression", label: "Depression δ", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "load", label: "Load", unit: "gm" }
         ]
       }
     ],
@@ -202,9 +220,6 @@ export const experiments: Experiment[] = [
     formula: "η = (g·d⁴·l) / (π·r⁴·θ)",
     standardValue: 8.22e11,
     unit: "dyne/cm²",
-    aiInputFields: [
-      { key: "load", label: "Load", unit: "kg" }
-    ],
     tables: [
       {
         id: "radius",
@@ -220,6 +235,9 @@ export const experiments: Experiment[] = [
           { key: "diff", label: "Diff" },
           { key: "csr", label: "CSR", unit: "cm" },
           { key: "total", label: "Total Reading", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "lc", label: "Least Count", unit: "cm" }
         ]
       },
       {
@@ -232,6 +250,9 @@ export const experiments: Experiment[] = [
           { key: "vc", label: "VC" },
           { key: "vsr", label: "VSR", unit: "cm" },
           { key: "total", label: "Total", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "msr", label: "Main Scale Reading", unit: "cm" }
         ]
       },
       {
@@ -244,6 +265,9 @@ export const experiments: Experiment[] = [
           { key: "dec", label: "Scale Reading Dec", unit: "cm" },
           { key: "mean", label: "Mean Angle", unit: "deg" },
           { key: "twist", label: "Twist θ", unit: "deg" }
+        ],
+        aiInputFields: [
+          { key: "load", label: "Load", unit: "kg" }
         ]
       }
     ],
@@ -276,9 +300,6 @@ export const experiments: Experiment[] = [
     formula: "T = (r·h·ρ·g) / 2",
     standardValue: 72,
     unit: "dyne/cm",
-    aiInputFields: [
-      { key: "r", label: "Radius r", unit: "cm" }
-    ],
     tables: [
       {
         id: "height",
@@ -289,6 +310,9 @@ export const experiments: Experiment[] = [
           { key: "meniscus", label: "Meniscus Reading", unit: "cm" },
           { key: "needle", label: "Needle Reading", unit: "cm" },
           { key: "h", label: "Height h", unit: "cm" }
+        ],
+        aiInputFields: [
+          { key: "h", label: "Height h", unit: "cm" }
         ]
       },
       {
@@ -298,6 +322,9 @@ export const experiments: Experiment[] = [
         columns: [
           { key: "lhs", label: "LHS Reading", unit: "cm" },
           { key: "rhs", label: "RHS Reading", unit: "cm" },
+          { key: "d1", label: "Diameter D1", unit: "cm" }
+        ],
+        aiInputFields: [
           { key: "d1", label: "Diameter D1", unit: "cm" }
         ]
       },
@@ -310,6 +337,9 @@ export const experiments: Experiment[] = [
           { key: "h", label: "Height h", unit: "cm" },
           { key: "r", label: "Radius r", unit: "cm" },
           { key: "T", label: "Surface Tension T", unit: "dyne/cm" }
+        ],
+        aiInputFields: [
+          { key: "r", label: "Radius r", unit: "cm" }
         ]
       }
     ],
@@ -341,9 +371,6 @@ export const experiments: Experiment[] = [
     formula: "n = (1/2l)√(T/m)",
     standardValue: 256,
     unit: "Hz",
-    aiInputFields: [
-      { key: "freq", label: "Frequency n", unit: "Hz" }
-    ],
     tables: [
       {
         id: "law-length",
@@ -357,6 +384,9 @@ export const experiments: Experiment[] = [
           { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
           { key: "nl", label: "n × l" }
+        ],
+        aiInputFields: [
+          { key: "freq", label: "Frequency n", unit: "Hz" }
         ]
       },
       {
@@ -371,6 +401,9 @@ export const experiments: Experiment[] = [
           { key: "sqrt_t", label: "√T", unit: "√N" },
           { key: "l2", label: "l²", unit: "cm²" },
           { key: "Tl2", label: "T/l²" }
+        ],
+        aiInputFields: [
+          { key: "tension", label: "Tension T", unit: "N" }
         ]
       }
     ],
@@ -413,9 +446,6 @@ export const experiments: Experiment[] = [
     formula: "λ = (D²m - D²n) / [4R(m - n)]",
     standardValue: 5893,
     unit: "Å",
-    aiInputFields: [
-      { key: "ring_no", label: "Ring No" }
-    ],
     tables: [
       {
         id: "rings",
@@ -427,6 +457,9 @@ export const experiments: Experiment[] = [
           { key: "final", label: "Final Reading", unit: "cm" },
           { key: "diameter", label: "Diameter D", unit: "cm" },
           { key: "d2", label: "D²", unit: "cm²" }
+        ],
+        aiInputFields: [
+          { key: "ring_no", label: "Ring No" }
         ]
       }
     ],
@@ -458,9 +491,6 @@ export const experiments: Experiment[] = [
     formula: "λ = (a+b)sinθ / m",
     standardValue: 6328,
     unit: "Å",
-    aiInputFields: [
-      { key: "order", label: "Order m" }
-    ],
     tables: [
       {
         id: "laser-obs",
@@ -474,6 +504,9 @@ export const experiments: Experiment[] = [
           { key: "D", label: "D", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
           { key: "lambda", label: "λ", unit: "Å" }
+        ],
+        aiInputFields: [
+          { key: "order", label: "Order m" }
         ]
       }
     ],
@@ -505,9 +538,6 @@ export const experiments: Experiment[] = [
     formula: "τ = RC",
     standardValue: 10,
     unit: "s",
-    aiInputFields: [
-      { key: "time", label: "Time t", unit: "s" }
-    ],
     tables: [
       {
         id: "rc-data",
@@ -517,6 +547,9 @@ export const experiments: Experiment[] = [
           { key: "time", label: "Time", unit: "s" },
           { key: "v_charge", label: "Charging Voltage", unit: "V" },
           { key: "v_discharge", label: "Discharging Voltage", unit: "V" }
+        ],
+        aiInputFields: [
+          { key: "time", label: "Time t", unit: "s" }
         ]
       }
     ],
@@ -561,10 +594,6 @@ export const experiments: Experiment[] = [
     formula: "Ic = βIb",
     standardValue: 150,
     unit: "",
-    aiInputFields: [
-      { key: "vbe", label: "VBE", unit: "V" },
-      { key: "vce", label: "VCE", unit: "V" }
-    ],
     tables: [
       {
         id: "input-char",
@@ -575,6 +604,9 @@ export const experiments: Experiment[] = [
           { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
           { key: "ib_4v", label: "IB at VCE=4V", unit: "µA" },
           { key: "ib_8v", label: "IB at VCE=8V", unit: "µA" }
+        ],
+        aiInputFields: [
+          { key: "vbe", label: "VBE", unit: "V" }
         ]
       },
       {
@@ -586,6 +618,9 @@ export const experiments: Experiment[] = [
           { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
           { key: "ic_150", label: "IC at IB=150µA", unit: "mA" },
           { key: "ic_175", label: "IC at IB=175µA", unit: "mA" }
+        ],
+        aiInputFields: [
+          { key: "vce", label: "VCE", unit: "V" }
         ]
       }
     ],
@@ -640,9 +675,6 @@ export const experiments: Experiment[] = [
     formula: "P/Q = l1/l2",
     standardValue: 10,
     unit: "Ω",
-    aiInputFields: [
-      { key: "res_p", label: "Resistance P", unit: "Ω" }
-    ],
     tables: [
       {
         id: "resistance",
@@ -653,6 +685,9 @@ export const experiments: Experiment[] = [
           { key: "l1", label: "l1", unit: "cm" },
           { key: "l2", label: "l2", unit: "cm" },
           { key: "q", label: "Q", unit: "Ω" }
+        ],
+        aiInputFields: [
+          { key: "res_p", label: "Resistance P", unit: "Ω" }
         ]
       }
     ],
@@ -684,9 +719,6 @@ export const experiments: Experiment[] = [
     formula: "I = Is(e^(V/ηVt) - 1)",
     standardValue: 0.7,
     unit: "V",
-    aiInputFields: [
-      { key: "v", label: "Voltage", unit: "V" }
-    ],
     tables: [
       {
         id: "characteristics",
@@ -697,6 +729,9 @@ export const experiments: Experiment[] = [
           { key: "f_i", label: "Forward Current", unit: "mA" },
           { key: "r_v", label: "Reverse Voltage", unit: "V" },
           { key: "r_i", label: "Reverse Current", unit: "µA" }
+        ],
+        aiInputFields: [
+          { key: "f_v", label: "Forward Voltage", unit: "V" }
         ]
       }
     ],

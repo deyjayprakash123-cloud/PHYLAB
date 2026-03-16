@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { experiments } from "@/lib/physics-data";
+import { experiments, type TableDefinition } from "@/lib/physics-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,26 +22,28 @@ export default function ExperimentPage() {
 
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [standardValue, setStandardValue] = useState(experiment?.standardValue || 0);
-  const [aiInputs, setAiInputs] = useState<Record<string, string>>({});
+  const [aiInputs, setAiInputs] = useState<Record<string, Record<string, string>>>({});
 
   useEffect(() => {
     if (experiment && Object.keys(tableData).length === 0) {
-      const initial: Record<string, any[]> = {};
+      const initialData: Record<string, any[]> = {};
+      const initialAiInputs: Record<string, Record<string, string>> = {};
+
       experiment.tables.forEach(t => {
         const rows = [];
         const numRows = t.defaultRows || 5;
         for (let i = 0; i < numRows; i++) {
           rows.push(t.columns.reduce((acc, col) => ({ ...acc, [col.key]: "" }), {}));
         }
-        initial[t.id] = rows;
+        initialData[t.id] = rows;
+        
+        if (t.aiInputFields) {
+          initialAiInputs[t.id] = t.aiInputFields.reduce((acc, f) => ({ ...acc, [f.key]: "" }), {});
+        }
       });
-      setTableData(initial);
-      
-      const initialAi: Record<string, string> = {};
-      experiment.aiInputFields.forEach(f => {
-        initialAi[f.key] = "";
-      });
-      setAiInputs(initialAi);
+
+      setTableData(initialData);
+      setAiInputs(initialAiInputs);
     }
   }, [experiment]);
 
@@ -62,7 +64,7 @@ export default function ExperimentPage() {
       
       // Auto-calculations for specific experiments
       if (experiment.id === 'bar-pendulum' && tableId === 'time-measurement') {
-        const calcTable = newData.map(row => {
+        updated[tableId] = newData.map(row => {
           const t1 = parseFloat(row.t1);
           const t2 = parseFloat(row.t2);
           const t3 = parseFloat(row.t3);
@@ -73,7 +75,6 @@ export default function ExperimentPage() {
           }
           return row;
         });
-        updated[tableId] = calcTable;
       }
 
       if (experiment.id === 'newtons-rings' && tableId === 'rings') {
@@ -92,20 +93,33 @@ export default function ExperimentPage() {
     });
   };
 
-  const generateAiRow = () => {
-    const mainTableId = experiment.tables[0].id;
-    const inputKey = experiment.aiInputFields[0].key;
-    const inputValue = aiInputs[inputKey];
+  const handleAiInputChange = (tableId: string, fieldKey: string, value: string) => {
+    setAiInputs(prev => ({
+      ...prev,
+      [tableId]: {
+        ...(prev[tableId] || {}),
+        [fieldKey]: value
+      }
+    }));
+  };
 
-    if (!inputValue) {
-      toast({ variant: "destructive", title: "Missing Input", description: "Please enter a value for the AI generator." });
+  const generateAiRow = (table: TableDefinition) => {
+    const inputs = aiInputs[table.id] || {};
+    const inputFields = table.aiInputFields || [];
+    
+    // Check if all inputs are filled (using the first one as primary for generator)
+    const primaryField = inputFields[0];
+    const primaryValue = inputs[primaryField.key];
+
+    if (!primaryValue) {
+      toast({ variant: "destructive", title: "Missing Input", description: `Please enter a value for ${primaryField.label}.` });
       return;
     }
 
-    const newRow = generateRowFromInput(experiment.id, mainTableId, inputKey, inputValue, standardValue, {});
+    const newRow = generateRowFromInput(experiment.id, table.id, primaryField.key, primaryValue, standardValue, {});
     
     setTableData(prev => {
-      const currentRows = [...(prev[mainTableId] || [])];
+      const currentRows = [...(prev[table.id] || [])];
       // Find first empty row or append
       const emptyRowIndex = currentRows.findIndex(row => Object.values(row).every(v => v === ""));
       if (emptyRowIndex !== -1) {
@@ -113,10 +127,10 @@ export default function ExperimentPage() {
       } else {
         currentRows.push(newRow);
       }
-      return { ...prev, [mainTableId]: currentRows };
+      return { ...prev, [table.id]: currentRows };
     });
 
-    toast({ title: "Row Generated", description: "A complete observation row has been added to your table." });
+    toast({ title: "Row Generated", description: `A complete observation row has been added to ${table.label}.` });
   };
 
   const getGraphData = (graphDef: any): DataPoint[] => {
@@ -241,63 +255,67 @@ export default function ExperimentPage() {
             </div>
           </section>
 
-          {/* Normal Observations */}
-          <section className="space-y-6">
+          {/* Observations with Integrated AI Generators */}
+          <section className="space-y-12">
             <h2 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 no-print">
-              <Calculator className="h-4 w-4" /> Normal Observation Tables
+              <Calculator className="h-4 w-4" /> Laboratory Observations
             </h2>
-            <div className="space-y-8">
+            <div className="space-y-16">
               {experiment.tables.map(table => (
-                <Card key={table.id} className="border-2 shadow-lg overflow-hidden">
-                  <CardHeader className="bg-slate-50 py-3 border-b">
-                    <CardTitle className="text-xs uppercase tracking-widest font-black text-slate-600">{table.label}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ObservationTable 
-                      experimentId={experiment.id}
-                      tableId={table.id}
-                      columns={table.columns}
-                      data={tableData[table.id] || []}
-                      onChange={(newData) => handleTableChange(table.id, newData)}
-                      standardValue={standardValue}
-                    />
-                  </CardContent>
-                </Card>
+                <div key={table.id} className="space-y-6">
+                  <Card className="border-2 shadow-lg overflow-hidden">
+                    <CardHeader className="bg-slate-50 py-3 border-b">
+                      <CardTitle className="text-xs uppercase tracking-widest font-black text-slate-600">{table.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <ObservationTable 
+                        experimentId={experiment.id}
+                        tableId={table.id}
+                        columns={table.columns}
+                        data={tableData[table.id] || []}
+                        onChange={(newData) => handleTableChange(table.id, newData)}
+                        standardValue={standardValue}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Per-table AI Observation Generator */}
+                  {table.aiInputFields && (
+                    <Card className="border-2 border-dashed border-primary/30 bg-primary/5 no-print shadow-md">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-2 text-primary text-[10px] uppercase tracking-widest font-black">
+                          <Zap className="h-4 w-4" /> AI Row Generator for {table.id}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-wrap items-end gap-4">
+                          {table.aiInputFields.map(field => (
+                            <div key={field.key} className="flex-1 min-w-[150px] space-y-1.5">
+                              <Label className="text-[9px] font-black uppercase text-slate-500">
+                                {field.label} {field.unit && `(${field.unit})`}
+                              </Label>
+                              <Input 
+                                type="number"
+                                placeholder="Enter value..."
+                                value={aiInputs[table.id]?.[field.key] || ""}
+                                onChange={(e) => handleAiInputChange(table.id, field.key, e.target.value)}
+                                className="h-9 border-2 font-mono text-xs bg-white"
+                              />
+                            </div>
+                          ))}
+                          <Button 
+                            onClick={() => generateAiRow(table)} 
+                            className="font-black uppercase tracking-widest text-[10px] h-9 px-6 bg-primary hover:bg-primary/90"
+                          >
+                            Generate Row
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               ))}
             </div>
-          </section>
-
-          {/* AI Observation Generator */}
-          <section className="no-print">
-            <Card className="border-4 border-primary/20 bg-primary/5 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-primary text-sm uppercase tracking-widest font-black">
-                  <Zap className="h-5 w-5" /> AI Observation Generator
-                </CardTitle>
-                <CardDescription className="text-[10px] font-bold uppercase">Generate a realistic row based on principal physics inputs</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {experiment.aiInputFields.map(field => (
-                    <div key={field.key} className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-slate-500">{field.label} {field.unit && `(${field.unit})`}</Label>
-                      <Input 
-                        type="number"
-                        placeholder="Enter value..."
-                        value={aiInputs[field.key] || ""}
-                        onChange={(e) => setAiInputs(prev => ({ ...prev, [field.key]: e.target.value }))}
-                        className="h-10 border-2 font-mono text-sm"
-                      />
-                    </div>
-                  ))}
-                  <div className="flex items-end">
-                    <Button onClick={generateAiRow} className="w-full font-black uppercase tracking-widest py-6">
-                      Generate AI Row
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </section>
 
           {/* Graphs */}
