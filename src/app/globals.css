@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 94%;
+    --background: 0 0% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -76,11 +76,15 @@
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  body {
+    background-color: white !important;
   }
   .printable-area, .printable-area * {
-    visibility: visible;
+    visibility: visible !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
   }
   .printable-area {
     position: absolute;
@@ -88,7 +92,12 @@
     top: 0;
     width: 100%;
   }
-  .no-print {
-    display: none !important;
+  .no-break {
+    break-inside: avoid;
+  }
+  .printable-table {
+    border-width: 1px !important;
+    border-color: black !important;
+    box-shadow: none !important;
   }
 }

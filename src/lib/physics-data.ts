@@ -4,7 +4,6 @@ export type TableDefinition = {
   label: string;
   columns: TableHeader[];
   defaultRows?: number;
-  aiInputKey?: string; // The column key that triggers AI generation for the row
 };
 
 export type GraphDefinition = {
@@ -40,6 +39,7 @@ export type Experiment = {
   tables: TableDefinition[];
   graphs: GraphDefinition[];
   questions: Question[];
+  aiInputFields: { key: string; label: string; unit?: string }[];
 };
 
 export const experiments: Experiment[] = [
@@ -49,16 +49,19 @@ export const experiments: Experiment[] = [
     category: "Mechanics",
     aim: "To determine the acceleration due to gravity (g) using a bar pendulum.",
     apparatus: ["Bar pendulum", "Stopwatch", "Meter scale", "Knife edge support"],
-    theory: "g = 4π²L/T² where L is equivalent length and T is time period.",
+    theory: "The acceleration due to gravity (g) is given by the formula g = 4π²L/T², where L is the equivalent length and T is the time period of oscillation.",
     formula: "g = 4π²L / T²",
     standardValue: 981,
     unit: "cm/s²",
+    aiInputFields: [
+      { key: "hole_no", label: "Hole No" },
+      { key: "dist_cg", label: "Dist from CG", unit: "cm" }
+    ],
     tables: [
       {
         id: "time-measurement",
         label: "Table 1: Time Measurement (20 Oscillations)",
         defaultRows: 19,
-        aiInputKey: "dist_cg",
         columns: [
           { key: "hole_no", label: "Hole No" },
           { key: "dist_cg", label: "Dist from CG", unit: "cm" },
@@ -67,18 +70,30 @@ export const experiments: Experiment[] = [
           { key: "t3", label: "t3", unit: "s" },
           { key: "mean_t", label: "Mean t", unit: "s" },
           { key: "T", label: "T = t/20", unit: "s" },
+          { key: "T2", label: "T²", unit: "s²" }
+        ]
+      },
+      {
+        id: "equivalent-length",
+        label: "Table 2: Equivalent Length Calculation",
+        defaultRows: 3,
+        columns: [
+          { key: "sl_no", label: "Sl No" },
+          { key: "L", label: "Equiv. Length L", unit: "cm" },
+          { key: "T", label: "Time Period T", unit: "s" },
+          { key: "L_T2", label: "L/T²", unit: "cm/s²" }
         ]
       }
     ],
     graphs: [
       {
         id: "l-vs-t2",
-        title: "L vs T² Graph",
+        title: "Graph of L vs T²",
         tableId: "time-measurement",
         xKey: "T2",
         yKey: "dist_cg",
         xLabel: "Time period squared (T²)",
-        yLabel: "Distance from CG (L)",
+        yLabel: "Equivalent Length (L)",
         xUnit: "s²",
         yUnit: "cm",
         equationFormat: "L = m·T² + c"
@@ -89,7 +104,10 @@ export const experiments: Experiment[] = [
       { q: "What is equivalent length?", a: "Distance between centre of suspension and centre of oscillation." },
       { q: "What is time period?", a: "Time taken for one complete oscillation." },
       { q: "Why take 20 oscillations?", a: "To reduce error in time measurement." },
-      { q: "Formula for g?", a: "g = 4π²L/T²" }
+      { q: "Formula for g?", a: "g = 4π²L/T²" },
+      { q: "Standard value of g?", a: "981 cm/s² (or 9.8 m/s²)." },
+      { q: "Why small amplitude is preferred?", a: "Because formula is valid only for small angles." },
+      { q: "What is radius of gyration?", a: "Distance from axis where entire mass can be assumed concentrated." }
     ]
   },
   {
@@ -98,60 +116,65 @@ export const experiments: Experiment[] = [
     category: "Properties of Matter",
     aim: "To determine Young's Modulus of the material of a rectangular beam by the method of bending.",
     apparatus: ["Rectangular beam", "Knife edges", "Screw gauge", "Vernier caliper", "Weights"],
-    theory: "Young's modulus Y = MgL³ / 4bd³δ.",
+    theory: "Young's modulus Y is determined by the depression δ produced at the center of a beam of length l, breadth b, and thickness d when a load M is applied: Y = MgL³ / 4bd³δ.",
     formula: "Y = (M·g·l³) / (4·b·d³·δ)",
     standardValue: 1.2e11,
     unit: "dyne/cm²",
+    aiInputFields: [
+      { key: "load", label: "Load", unit: "gm" }
+    ],
     tables: [
       {
         id: "thickness",
         label: "Table 1: Thickness (Screw Gauge)",
-        defaultRows: 5,
-        aiInputKey: "n",
+        defaultRows: 3,
         columns: [
           { key: "obs_no", label: "Obs No" },
           { key: "pitch", label: "Pitch", unit: "cm" },
-          { key: "lc", label: "Least Count", unit: "cm" },
+          { key: "lc", label: "LC", unit: "cm" },
           { key: "icsr", label: "ICSR" },
-          { key: "n", label: "No. Rotations N" },
-          { key: "psr", label: "PSR = N×P", unit: "cm" },
-          { key: "diff", label: "Diff (I-F)" },
+          { key: "n", label: "N (Rotations)" },
+          { key: "psr", label: "PSR", unit: "cm" },
+          { key: "diff", label: "Diff(I-F)" },
           { key: "csr", label: "CSR", unit: "cm" },
-          { key: "total", label: "Total Reading", unit: "cm" },
+          { key: "total", label: "Total Reading", unit: "cm" }
         ]
       },
       {
         id: "breadth",
         label: "Table 2: Breadth (Vernier Caliper)",
-        defaultRows: 5,
-        aiInputKey: "vc",
+        defaultRows: 3,
         columns: [
           { key: "obs_no", label: "Obs No" },
-          { key: "msr", label: "Main Scale Reading (MSR)", unit: "cm" },
-          { key: "vc", label: "Vernier Coincidence (VC)" },
-          { key: "vsr", label: "VSR = VC×LC", unit: "cm" },
-          { key: "total", label: "Total Reading", unit: "cm" },
+          { key: "msr", label: "MSR", unit: "cm" },
+          { key: "vc", label: "VC" },
+          { key: "vsr", label: "VSR", unit: "cm" },
+          { key: "total", label: "MSR + VSR", unit: "cm" }
         ]
       },
       {
         id: "depression",
         label: "Table 3: Load vs Depression",
         defaultRows: 6,
-        aiInputKey: "load",
         columns: [
-          { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "gm" },
-          { key: "inc", label: "Increasing Reading", unit: "cm" },
-          { key: "dec", label: "Decreasing Reading", unit: "cm" },
-          { key: "mean", label: "Mean Reading", unit: "cm" },
-          { key: "depression", label: "Depression δ", unit: "cm" },
+          { key: "msr_inc", label: "MSR Inc", unit: "cm" },
+          { key: "vc_inc", label: "VC Inc" },
+          { key: "vsr_inc", label: "VSR Inc", unit: "cm" },
+          { key: "total_inc", label: "Total (a)", unit: "cm" },
+          { key: "msr_dec", label: "MSR Dec", unit: "cm" },
+          { key: "vc_dec", label: "VC Dec" },
+          { key: "vsr_dec", label: "VSR Dec", unit: "cm" },
+          { key: "total_dec", label: "Total (b)", unit: "cm" },
+          { key: "mean", label: "Mean (a+b)/2", unit: "cm" },
+          { key: "depression", label: "Depression δ", unit: "cm" }
         ]
       }
     ],
     graphs: [
       {
         id: "load-vs-dep",
-        title: "Load vs Depression",
+        title: "Graph of Load vs Depression",
         tableId: "depression",
         xKey: "depression",
         yKey: "load",
@@ -163,7 +186,10 @@ export const experiments: Experiment[] = [
     ],
     questions: [
       { q: "What is Young's modulus?", a: "Ratio of stress to strain within elastic limit." },
-      { q: "State Hooke's Law.", a: "Stress is directly proportional to strain within elastic limit." }
+      { q: "What is stress?", a: "Force per unit area." },
+      { q: "What is strain?", a: "Change in dimension / original dimension." },
+      { q: "State Hooke's Law.", a: "Stress is directly proportional to strain within elastic limit." },
+      { q: "Unit of Young's modulus?", a: "N/m² or dyne/cm²." }
     ]
   },
   {
@@ -172,30 +198,59 @@ export const experiments: Experiment[] = [
     category: "Properties of Matter",
     aim: "To determine the rigidity modulus (η) of the material of a wire.",
     apparatus: ["Barton's apparatus", "Weights", "Vernier caliper", "Screw gauge"],
-    theory: "η = (gd⁴l) / (πr⁴θ).",
+    theory: "The rigidity modulus η is determined using the torque applied to a wire of radius r and length l: η = (gd⁴l) / (πr⁴θ).",
     formula: "η = (g·d⁴·l) / (π·r⁴·θ)",
     standardValue: 8.22e11,
     unit: "dyne/cm²",
+    aiInputFields: [
+      { key: "load", label: "Load", unit: "kg" }
+    ],
     tables: [
+      {
+        id: "radius",
+        label: "Table 1: Radius of Rod (Screw Gauge)",
+        defaultRows: 3,
+        columns: [
+          { key: "obs", label: "Obs" },
+          { key: "pitch", label: "Pitch", unit: "cm" },
+          { key: "lc", label: "LC", unit: "cm" },
+          { key: "icsr", label: "ICSR" },
+          { key: "n", label: "Rotations" },
+          { key: "psr", label: "PSR", unit: "cm" },
+          { key: "diff", label: "Diff" },
+          { key: "csr", label: "CSR", unit: "cm" },
+          { key: "total", label: "Total Reading", unit: "cm" }
+        ]
+      },
+      {
+        id: "diameter",
+        label: "Table 2: Cylinder Diameter (Vernier Caliper)",
+        defaultRows: 3,
+        columns: [
+          { key: "obs", label: "Obs" },
+          { key: "msr", label: "MSR", unit: "cm" },
+          { key: "vc", label: "VC" },
+          { key: "vsr", label: "VSR", unit: "cm" },
+          { key: "total", label: "Total", unit: "cm" }
+        ]
+      },
       {
         id: "twist",
         label: "Table 3: Load vs Twist",
         defaultRows: 6,
-        aiInputKey: "load",
         columns: [
-          { key: "obs", label: "Obs" },
           { key: "load", label: "Load", unit: "kg" },
-          { key: "inc", label: "Scale Reading Inc", unit: "cm" },
-          { key: "dec", label: "Scale Reading Dec", unit: "cm" },
+          { key: "inc", label: "Scale Inc", unit: "cm" },
+          { key: "dec", label: "Scale Dec", unit: "cm" },
           { key: "mean", label: "Mean Angle", unit: "deg" },
-          { key: "twist", label: "Twist θ", unit: "deg" },
+          { key: "twist", label: "Twist θ", unit: "deg" }
         ]
       }
     ],
     graphs: [
       {
         id: "load-vs-twist",
-        title: "Load vs Twist Angle",
+        title: "Graph of Load vs Twist Angle",
         tableId: "twist",
         xKey: "twist",
         yKey: "load",
@@ -206,7 +261,9 @@ export const experiments: Experiment[] = [
       }
     ],
     questions: [
-      { q: "What is rigidity modulus?", a: "Ratio of shear stress to shear strain." }
+      { q: "What is rigidity modulus?", a: "Ratio of shear stress to shear strain." },
+      { q: "What is torsion?", a: "Twisting of a wire due to applied torque." },
+      { q: "Define torque.", a: "Product of force and perpendicular distance." }
     ]
   },
   {
@@ -215,21 +272,47 @@ export const experiments: Experiment[] = [
     category: "Fluid Mechanics",
     aim: "Determine the surface tension of a liquid using the capillary rise method.",
     apparatus: ["Capillary tube", "Traveling microscope", "Beaker", "Liquid"],
-    theory: "T = (r·h·ρ·g) / 2.",
+    theory: "Surface tension T = (r·h·ρ·g) / 2 where r is radius of tube and h is height of rise.",
     formula: "T = (r·h·ρ·g) / 2",
     standardValue: 72,
     unit: "dyne/cm",
+    aiInputFields: [
+      { key: "r", label: "Radius r", unit: "cm" }
+    ],
     tables: [
+      {
+        id: "height",
+        label: "Table 1: Height Measurement",
+        defaultRows: 3,
+        columns: [
+          { key: "tube", label: "Tube #" },
+          { key: "meniscus", label: "Meniscus", unit: "cm" },
+          { key: "needle", label: "Needle", unit: "cm" },
+          { key: "h", label: "Height h", unit: "cm" }
+        ]
+      },
+      {
+        id: "diameter",
+        label: "Table 2: Diameter Measurement",
+        defaultRows: 3,
+        columns: [
+          { key: "lhs", label: "LHS Reading", unit: "cm" },
+          { key: "rhs", label: "RHS Reading", unit: "cm" },
+          { key: "d1", label: "Diameter D1", unit: "cm" },
+          { key: "lower", label: "Lower End", unit: "cm" },
+          { key: "upper", label: "Upper End", unit: "cm" },
+          { key: "d2", label: "Diameter D2", unit: "cm" }
+        ]
+      },
       {
         id: "final-calc",
         label: "Table 3: Final Calculation",
         defaultRows: 3,
-        aiInputKey: "r",
         columns: [
-          { key: "tube", label: "Tube" },
+          { key: "tube", label: "Tube #" },
           { key: "h", label: "Height h", unit: "cm" },
           { key: "r", label: "Radius r", unit: "cm" },
-          { key: "T", label: "Surface Tension T", unit: "dyne/cm" },
+          { key: "T", label: "Surface Tension T", unit: "dyne/cm" }
         ]
       }
     ],
@@ -247,7 +330,8 @@ export const experiments: Experiment[] = [
       }
     ],
     questions: [
-      { q: "What is surface tension?", a: "Force per unit length acting along surface of liquid." }
+      { q: "What is surface tension?", a: "Force per unit length acting along surface of liquid." },
+      { q: "What is capillary rise?", a: "Rise of liquid in narrow tube." }
     ]
   },
   {
@@ -256,44 +340,46 @@ export const experiments: Experiment[] = [
     category: "Acoustics",
     aim: "To verify the laws of transverse vibration of strings using a sonometer.",
     apparatus: ["Sonometer", "Tuning forks", "Weights"],
-    theory: "Frequency n = (1/2l)√(T/m).",
+    theory: "Frequency n = (1/2l)√(T/m) where T is tension and m is linear mass density.",
     formula: "n = (1/2l)√(T/m)",
     standardValue: 256,
     unit: "Hz",
+    aiInputFields: [
+      { key: "freq", label: "Frequency n", unit: "Hz" }
+    ],
     tables: [
       {
         id: "law-length",
-        label: "Table 1: Frequency vs Length (Constant Weight)",
-        defaultRows: 5,
-        aiInputKey: "freq",
+        label: "Table 1: Frequency vs Length",
+        defaultRows: 3,
         columns: [
-          { key: "obs_no", label: "Obs" },
-          { key: "freq", label: "Frequency n", unit: "Hz" },
-          { key: "inc", label: "Length Increasing", unit: "cm" },
-          { key: "dec", label: "Length Decreasing", unit: "cm" },
+          { key: "obs", label: "Obs" },
+          { key: "freq", label: "Frequency", unit: "Hz" },
+          { key: "inc", label: "Length Inc", unit: "cm" },
+          { key: "dec", label: "Length Dec", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
           { key: "inv_l", label: "1/l", unit: "cm⁻¹" },
+          { key: "nl", label: "n × l" }
         ]
       },
       {
         id: "law-tension",
-        label: "Table 2: Tension vs Length (Constant Frequency)",
-        defaultRows: 5,
-        aiInputKey: "tension",
+        label: "Table 2: Tension vs Length",
+        defaultRows: 3,
         columns: [
-          { key: "obs_no", label: "Obs" },
-          { key: "tension", label: "Tension T", unit: "N" },
-          { key: "inc", label: "Length Increasing", unit: "cm" },
-          { key: "dec", label: "Length Decreasing", unit: "cm" },
+          { key: "tension", label: "Tension", unit: "N" },
+          { key: "inc", label: "Length Inc", unit: "cm" },
+          { key: "dec", label: "Length Dec", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
-          { key: "sqrt_T", label: "√T", unit: "√N" },
+          { key: "l2", label: "l²", unit: "cm²" },
+          { key: "Tl2", label: "T/l²" }
         ]
       }
     ],
     graphs: [
       {
-        id: "law-len-graph",
-        title: "Verification of Law of Length",
+        id: "n-vs-invl",
+        title: "Verification of Law of Length (n vs 1/l)",
         tableId: "law-length",
         xKey: "inv_l",
         yKey: "freq",
@@ -303,15 +389,15 @@ export const experiments: Experiment[] = [
         yUnit: "Hz"
       },
       {
-        id: "law-ten-graph",
-        title: "Verification of Law of Tension",
+        id: "n-vs-sqrtt",
+        title: "Verification of Law of Tension (n vs √T)",
         tableId: "law-tension",
         xKey: "sqrt_T",
-        yKey: "mean_l",
+        yKey: "freq",
         xLabel: "√T",
-        yLabel: "Length (l)",
+        yLabel: "Frequency (n)",
         xUnit: "√N",
-        yUnit: "cm"
+        yUnit: "Hz"
       }
     ],
     questions: [
@@ -325,22 +411,24 @@ export const experiments: Experiment[] = [
     category: "Optics",
     aim: "To determine the wavelength of sodium light using Newton's Rings.",
     apparatus: ["Sodium lamp", "Traveling microscope", "Plano-convex lens", "Glass plate"],
-    theory: "λ = (D²m - D²n) / [4R(m - n)].",
+    theory: "Wavelength λ = (D²m - D²n) / [4R(m - n)] where D is ring diameter and R is lens radius.",
     formula: "λ = (D²m - D²n) / [4R(m - n)]",
     standardValue: 5893,
     unit: "Å",
+    aiInputFields: [
+      { key: "ring_no", label: "Ring No" }
+    ],
     tables: [
       {
         id: "rings",
         label: "Observation Table (Rings)",
         defaultRows: 10,
-        aiInputKey: "ring_no",
         columns: [
           { key: "ring_no", label: "Ring No" },
           { key: "initial", label: "Initial Reading", unit: "cm" },
           { key: "final", label: "Final Reading", unit: "cm" },
           { key: "diameter", label: "Diameter D", unit: "cm" },
-          { key: "d2", label: "D²", unit: "cm²" },
+          { key: "d2", label: "D²", unit: "cm²" }
         ]
       }
     ],
@@ -351,14 +439,15 @@ export const experiments: Experiment[] = [
         tableId: "rings",
         xKey: "ring_no",
         yKey: "d2",
-        xLabel: "Ring number (n)",
+        xLabel: "Ring Number (n)",
         yLabel: "D²",
         xUnit: "",
         yUnit: "cm²"
       }
     ],
     questions: [
-      { q: "Why rings circular?", a: "Because air film thickness is circular." }
+      { q: "Why rings are circular?", a: "Because air film thickness is circular." },
+      { q: "Why central spot dark?", a: "Due to phase change on reflection." }
     ]
   },
   {
@@ -367,22 +456,26 @@ export const experiments: Experiment[] = [
     category: "Optics",
     aim: "To determine the wavelength of a LASER beam using a diffraction grating.",
     apparatus: ["LASER source", "Diffraction grating", "Screen"],
-    theory: "mλ = (a+b)sinθ.",
+    theory: "mλ = (a+b)sinθ where m is the order and θ is the diffraction angle.",
     formula: "λ = (a+b)sinθ / m",
     standardValue: 6328,
     unit: "Å",
+    aiInputFields: [
+      { key: "order", label: "Order m" }
+    ],
     tables: [
       {
         id: "laser-obs",
         label: "Observation Table",
-        defaultRows: 8,
-        aiInputKey: "order",
+        defaultRows: 4,
         columns: [
+          { key: "lines_cm", label: "Lines/cm" },
+          { key: "element", label: "Grating Element" },
           { key: "order", label: "Order m" },
           { key: "y", label: "y", unit: "cm" },
           { key: "D", label: "D", unit: "cm" },
           { key: "sin_theta", label: "sinθ" },
-          { key: "lambda", label: "λ", unit: "Å" },
+          { key: "lambda", label: "λ", unit: "Å" }
         ]
       }
     ],
@@ -400,7 +493,8 @@ export const experiments: Experiment[] = [
       }
     ],
     questions: [
-      { q: "LASER stands for?", a: "Light Amplification by Stimulated Emission of Radiation." }
+      { q: "What is LASER?", a: "Light Amplification by Stimulated Emission of Radiation." },
+      { q: "What is diffraction?", a: "Bending of light around edges." }
     ]
   },
   {
@@ -409,38 +503,45 @@ export const experiments: Experiment[] = [
     category: "Electricity",
     aim: "Study the charging and discharging of a capacitor in an RC circuit.",
     apparatus: ["Resistor", "Capacitor", "Power supply", "Voltmeter", "Stopwatch"],
-    theory: "Time constant τ = RC.",
+    theory: "V = V₀(1 - e^(-t/RC)) for charging and V = V₀e^(-t/RC) for discharging.",
     formula: "τ = RC",
     standardValue: 10,
     unit: "s",
+    aiInputFields: [
+      { key: "time", label: "Time t", unit: "s" }
+    ],
     tables: [
       {
         id: "rc-data",
-        label: "Time-Voltage Table",
+        label: "Observation Table",
         defaultRows: 20,
-        aiInputKey: "time",
         columns: [
           { key: "time", label: "Time", unit: "s" },
           { key: "v_charge", label: "Charging Voltage", unit: "V" },
-          { key: "v_discharge", label: "Discharging Voltage", unit: "V" },
+          { key: "v_discharge", label: "Discharging Voltage", unit: "V" }
         ]
       }
     ],
     graphs: [
       {
-        id: "time-vs-vc",
-        title: "Charging Curve",
+        id: "time-vs-v",
+        title: "Voltage vs Time Graph",
         tableId: "rc-data",
         xKey: "time",
-        yKey: "v_charge",
+        yKey: ["v_charge", "v_discharge"],
         xLabel: "Time",
-        yLabel: "Voltage (V)",
+        yLabel: "Voltage",
         xUnit: "s",
         yUnit: "V",
-        type: "monotone"
+        type: "monotone",
+        multiSeries: [
+          { key: "v_charge", label: "Charging", color: "#3b82f6" },
+          { key: "v_discharge", label: "Discharging", color: "#ef4444" }
+        ]
       }
     ],
     questions: [
+      { q: "What is capacitor?", a: "Device that stores electric charge." },
       { q: "What is time constant?", a: "Time to reach 63% of final voltage." }
     ]
   },
@@ -450,33 +551,46 @@ export const experiments: Experiment[] = [
     category: "Electronics",
     aim: "Find input and output resistance of a BJT in CE configuration.",
     apparatus: ["BJT", "Variable DC supply", "Ammeters", "Voltmeters"],
-    theory: "Ri = ΔVBE / ΔIB.",
-    formula: "Ri = ΔVBE / ΔIB",
-    standardValue: 1000,
-    unit: "Ω",
+    theory: "Input resistance Ri = ΔVBE / ΔIB and current gain Ic = βIb.",
+    formula: "Ic = βIb",
+    standardValue: 150,
+    unit: "",
+    aiInputFields: [
+      { key: "ib", label: "Base Current Ib", unit: "µA" }
+    ],
     tables: [
       {
         id: "input-char",
-        label: "Input Characteristics",
+        label: "Table 1: Input Characteristics",
         defaultRows: 10,
-        aiInputKey: "vbe",
         columns: [
           { key: "vbe", label: "VBE", unit: "V" },
           { key: "ib_1v", label: "IB at VCE=1V", unit: "µA" },
           { key: "ib_4v", label: "IB at VCE=4V", unit: "µA" },
-          { key: "ib_8v", label: "IB at VCE=8V", unit: "µA" },
+          { key: "ib_8v", label: "IB at VCE=8V", unit: "µA" }
+        ]
+      },
+      {
+        id: "output-char",
+        label: "Table 2: Output Characteristics",
+        defaultRows: 10,
+        columns: [
+          { key: "vce", label: "VCE", unit: "V" },
+          { key: "ic_125", label: "IC at IB=125µA", unit: "mA" },
+          { key: "ic_150", label: "IC at IB=150µA", unit: "mA" },
+          { key: "ic_175", label: "IC at IB=175µA", unit: "mA" }
         ]
       }
     ],
     graphs: [
       {
         id: "input-graph",
-        title: "Input Characteristics",
+        title: "Input Characteristics (VBE vs IB)",
         tableId: "input-char",
         xKey: "vbe",
         yKey: ["ib_1v", "ib_4v", "ib_8v"],
-        xLabel: "VBE (V)",
-        yLabel: "IB (µA)",
+        xLabel: "VBE",
+        yLabel: "IB",
         xUnit: "V",
         yUnit: "µA",
         type: "monotone",
@@ -485,10 +599,28 @@ export const experiments: Experiment[] = [
           { key: "ib_4v", label: "VCE=4V", color: "#ef4444" },
           { key: "ib_8v", label: "VCE=8V", color: "#10b981" }
         ]
+      },
+      {
+        id: "output-graph",
+        title: "Output Characteristics (VCE vs IC)",
+        tableId: "output-char",
+        xKey: "vce",
+        yKey: ["ic_125", "ic_150", "ic_175"],
+        xLabel: "VCE",
+        yLabel: "IC",
+        xUnit: "V",
+        yUnit: "mA",
+        type: "monotone",
+        multiSeries: [
+          { key: "ic_125", label: "IB=125µA", color: "#3b82f6" },
+          { key: "ic_150", label: "IB=150µA", color: "#ef4444" },
+          { key: "ic_175", label: "IB=175µA", color: "#10b981" }
+        ]
       }
     ],
     questions: [
-      { q: "Define current gain?", a: "β = Ic / Ib." }
+      { q: "Why base is thin?", a: "To allow maximum carriers to pass." },
+      { q: "Define current gain (β).", a: "β = Ic / Ib." }
     ]
   },
   {
@@ -497,26 +629,30 @@ export const experiments: Experiment[] = [
     category: "Electricity",
     aim: "Determine unknown resistance using a Metre Bridge.",
     apparatus: ["Metre bridge", "Galvanometer", "Resistance box", "Unknown resistance"],
-    theory: "P/Q = l1/l2.",
-    formula: "P = Q * (l1 / l2)",
+    theory: "Based on Wheatstone bridge principle: P/Q = l1/l2.",
+    formula: "P/Q = l1/l2",
     standardValue: 10,
     unit: "Ω",
+    aiInputFields: [
+      { key: "res_p", label: "Resistance P", unit: "Ω" }
+    ],
     tables: [
       {
         id: "resistance",
         label: "Observation Table",
         defaultRows: 10,
-        aiInputKey: "res_p",
         columns: [
-          { key: "res_p", label: "Known Res P", unit: "Ω" },
+          { key: "res_p", label: "Resistance P", unit: "Ω" },
           { key: "l1", label: "l1", unit: "cm" },
-          { key: "l2", label: "l2 = 100 - l1", unit: "cm" },
+          { key: "l2", label: "l2", unit: "cm" },
+          { key: "q", label: "Q", unit: "Ω" }
         ]
       }
     ],
     graphs: [],
     questions: [
-      { q: "What is null point?", a: "Point of zero current in galvanometer." }
+      { q: "What principle used?", a: "Wheatstone bridge principle." },
+      { q: "What is balancing length?", a: "Length at which galvanometer shows zero deflection." }
     ]
   },
   {
@@ -525,38 +661,55 @@ export const experiments: Experiment[] = [
     category: "Electronics",
     aim: "To study the V-I characteristics of a PN junction diode.",
     apparatus: ["PN diode", "Voltmeter", "Ammeter", "Power supply"],
-    theory: "Current follows exponential relationship.",
-    formula: "I = Is * (e^(V/ηVt) - 1)",
+    theory: "I = Is(e^(V/ηVt) - 1).",
+    formula: "I = Is(e^(V/ηVt) - 1)",
     standardValue: 0.7,
     unit: "V",
+    aiInputFields: [
+      { key: "v", label: "Voltage", unit: "V" }
+    ],
     tables: [
       {
         id: "characteristics",
-        label: "V-I Characteristics",
+        label: "Observation Table",
         defaultRows: 10,
-        aiInputKey: "v_f",
         columns: [
-          { key: "v_f", label: "Voltage", unit: "V" },
-          { key: "i_f", label: "Current", unit: "mA" },
+          { key: "f_v", label: "Forward Voltage", unit: "V" },
+          { key: "f_i", label: "Forward Current", unit: "mA" },
+          { key: "r_v", label: "Reverse Voltage", unit: "V" },
+          { key: "r_i", label: "Reverse Current", unit: "µA" }
         ]
       }
     ],
     graphs: [
       {
         id: "forward-graph",
-        title: "V-I Characteristics",
+        title: "Forward Bias (Voltage vs Current)",
         tableId: "characteristics",
-        xKey: "v_f",
-        yKey: "i_f",
-        xLabel: "Voltage (V)",
-        yLabel: "Current (mA)",
+        xKey: "f_v",
+        yKey: "f_i",
+        xLabel: "Voltage",
+        yLabel: "Current",
         xUnit: "V",
         yUnit: "mA",
+        type: "monotone"
+      },
+      {
+        id: "reverse-graph",
+        title: "Reverse Bias (Voltage vs Current)",
+        tableId: "characteristics",
+        xKey: "r_v",
+        yKey: "r_i",
+        xLabel: "Voltage",
+        yLabel: "Current",
+        xUnit: "V",
+        yUnit: "µA",
         type: "monotone"
       }
     ],
     questions: [
-      { q: "What is knee voltage?", a: "Voltage where current increases rapidly." }
+      { q: "What is knee voltage?", a: "Voltage where current increases rapidly." },
+      { q: "What is breakdown voltage?", a: "Voltage at which reverse current increases suddenly." }
     ]
   }
 ];

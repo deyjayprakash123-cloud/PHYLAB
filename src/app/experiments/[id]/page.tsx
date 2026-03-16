@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ObservationTable } from "@/components/ObservationTable";
 import { PhysicsGraph } from "@/components/PhysicsGraph";
-import { calculatePercentageError, calculateLinearRegression, type DataPoint } from "@/lib/utils/physics-calc";
-import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, Zap, Settings } from "lucide-react";
+import { calculatePercentageError, calculateLinearRegression, generateRowFromInput, type DataPoint } from "@/lib/utils/physics-calc";
+import { ChevronLeft, FileDown, Info, Calculator, LineChart, FileText, HelpCircle, Zap, Settings, Beaker, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -23,6 +23,7 @@ export default function ExperimentPage() {
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState("overview");
   const [standardValue, setStandardValue] = useState(experiment?.standardValue || 0);
+  const [aiInputs, setAiInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (experiment && Object.keys(tableData).length === 0) {
@@ -36,6 +37,12 @@ export default function ExperimentPage() {
         initial[t.id] = rows;
       });
       setTableData(initial);
+      
+      const initialAi: Record<string, string> = {};
+      experiment.aiInputFields.forEach(f => {
+        initialAi[f.key] = "";
+      });
+      setAiInputs(initialAi);
     }
   }, [experiment]);
 
@@ -52,6 +59,33 @@ export default function ExperimentPage() {
 
   const handleTableChange = (tableId: string, newData: any[]) => {
     setTableData(prev => ({ ...prev, [tableId]: newData }));
+  };
+
+  const generateAiRow = () => {
+    const mainTableId = experiment.tables[0].id;
+    const inputKey = experiment.aiInputFields[0].key;
+    const inputValue = aiInputs[inputKey];
+
+    if (!inputValue) {
+      toast({ variant: "destructive", title: "Missing Input", description: "Please enter a value for the AI generator." });
+      return;
+    }
+
+    const newRow = generateRowFromInput(experiment.id, mainTableId, inputKey, inputValue, standardValue, {});
+    
+    setTableData(prev => {
+      const currentRows = [...(prev[mainTableId] || [])];
+      // Find first empty row or append
+      const emptyRowIndex = currentRows.findIndex(row => Object.values(row).every(v => v === ""));
+      if (emptyRowIndex !== -1) {
+        currentRows[emptyRowIndex] = newRow;
+      } else {
+        currentRows.push(newRow);
+      }
+      return { ...prev, [mainTableId]: currentRows };
+    });
+
+    toast({ title: "Row Generated", description: "A complete observation row has been added to your table." });
   };
 
   const getGraphData = (graphDef: any): DataPoint[] => {
@@ -115,7 +149,6 @@ export default function ExperimentPage() {
 
   const handleExport = () => {
     window.print();
-    toast({ title: "Generating Report", description: "Preparing your experiment report for print/PDF." });
   };
 
   return (
@@ -135,12 +168,13 @@ export default function ExperimentPage() {
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="printable-area space-y-8">
-          <header className="space-y-4 bg-white dark:bg-slate-900 p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="printable-area space-y-12">
+          {/* Section 1: Aim & Apparatus */}
+          <section className="bg-white dark:bg-slate-900 p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="flex-1">
                 <h1 className="text-4xl font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tighter">{experiment.title}</h1>
-                <p className="text-slate-500 font-bold text-sm tracking-widest mt-2 uppercase">OUTR B.Tech Physics Laboratory Manual</p>
+                <p className="text-slate-500 font-bold text-sm tracking-widest mt-2 uppercase">Official OUTR Lab Manual Structure</p>
               </div>
               <div className="bg-primary/5 p-6 rounded-2xl border-2 border-primary/20 no-print min-w-[240px]">
                 <div className="flex items-center justify-between mb-2">
@@ -159,73 +193,103 @@ export default function ExperimentPage() {
                 </div>
               </div>
             </div>
-          </header>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-5 w-full max-w-3xl no-print bg-slate-200/50 dark:bg-slate-900 p-1 rounded-xl">
-              <TabsTrigger value="overview" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><Info className="h-4 w-4" /> Overview</TabsTrigger>
-              <TabsTrigger value="observations" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><Calculator className="h-4 w-4" /> Observations</TabsTrigger>
-              <TabsTrigger value="analysis" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><LineChart className="h-4 w-4" /> Graphs</TabsTrigger>
-              <TabsTrigger value="questions" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><HelpCircle className="h-4 w-4" /> Viva Q&A</TabsTrigger>
-              <TabsTrigger value="report" className="gap-2 font-bold uppercase text-[10px] tracking-wider"><FileText className="h-4 w-4" /> Final Report</TabsTrigger>
-            </TabsList>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Beaker className="h-5 w-5" />
+                  <h2 className="text-sm font-black uppercase tracking-widest">Aim</h2>
+                </div>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-300">{experiment.aim}</p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <ListChecks className="h-5 w-5" />
+                  <h2 className="text-sm font-black uppercase tracking-widest">Apparatus</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {experiment.apparatus.map((item, i) => (
+                    <span key={i} className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
 
-            <TabsContent value="overview" className="space-y-6 animate-in fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                  <Card className="border-2 shadow-sm">
-                    <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Aim</CardTitle></CardHeader>
-                    <CardContent><p className="text-lg font-medium">{experiment.aim}</p></CardContent>
-                  </Card>
-                  <Card className="border-2 shadow-sm">
-                    <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Theory & Principle</CardTitle></CardHeader>
-                    <CardContent className="prose prose-slate dark:prose-invert max-w-none">
-                      <p className="leading-relaxed">{experiment.theory}</p>
-                      <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl my-6 border-2 flex items-center justify-center">
-                        <code className="text-2xl font-mono font-black text-primary">{experiment.formula}</code>
+          {/* Section 2: Theory */}
+          <section className="bg-white dark:bg-slate-900 p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center gap-2 text-primary">
+              <Info className="h-5 w-5" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Theory & Principle</h2>
+            </div>
+            <div className="prose prose-slate dark:prose-invert max-w-none">
+              <p className="leading-relaxed text-slate-600 dark:text-slate-400">{experiment.theory}</p>
+              <div className="bg-slate-50 dark:bg-slate-950 p-10 rounded-3xl my-6 border-2 flex flex-col items-center justify-center gap-4 group transition-all hover:border-primary/30">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-primary transition-colors">Governing Equation</span>
+                <code className="text-3xl font-mono font-black text-slate-900 dark:text-white">{experiment.formula}</code>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Observations */}
+          <section className="space-y-8">
+            <div className="flex items-center justify-between no-print">
+              <div className="flex items-center gap-2 text-primary">
+                <Calculator className="h-5 w-5" />
+                <h2 className="text-sm font-black uppercase tracking-widest">Laboratory Observations</h2>
+              </div>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-slate-200/50 dark:bg-slate-900 p-1 rounded-xl">
+                <TabsList className="bg-transparent h-8 border-none">
+                  <TabsTrigger value="manual" className="text-[10px] font-black uppercase tracking-widest h-7 px-4">Manual Entry</TabsTrigger>
+                  <TabsTrigger value="ai" className="text-[10px] font-black uppercase tracking-widest h-7 px-4">AI Generator</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {activeTab === "ai" && (
+              <Card className="no-print border-2 border-primary/20 bg-primary/5 shadow-lg animate-in fade-in slide-in-from-top-4">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-primary text-sm uppercase tracking-widest font-black">
+                    <Zap className="h-5 w-5" /> AI Row Generator
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {experiment.aiInputFields.map((field) => (
+                      <div key={field.key} className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest font-black text-slate-500">{field.label} {field.unit && `(${field.unit})`}</Label>
+                        <Input 
+                          type="number"
+                          value={aiInputs[field.key] || ""}
+                          onChange={(e) => setAiInputs(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder="Enter value..."
+                          className="font-mono text-sm border-2 focus-visible:ring-primary"
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="space-y-6">
-                  <Card className="border-2 shadow-sm">
-                    <CardHeader><CardTitle className="text-sm uppercase tracking-widest font-black text-slate-400">Apparatus</CardTitle></CardHeader>
-                    <CardContent>
-                      <ul className="space-y-3">
-                        {experiment.apparatus.map((item, i) => (
-                          <li key={i} className="flex items-center gap-3 font-bold">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
+                    ))}
+                    <div className="flex items-end">
+                      <Button onClick={generateAiRow} className="w-full font-black uppercase tracking-widest gap-2 py-6">
+                        <Zap className="h-4 w-4" /> Generate Row
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center italic">Generating readings with realistic ±1-3% experimental noise</p>
+                </CardContent>
+              </Card>
+            )}
 
-            <TabsContent value="observations" className="space-y-8 animate-in fade-in">
-              <div className="no-print bg-primary/5 p-4 rounded-xl border border-primary/20 flex items-center gap-3">
-                <div className="bg-primary text-white p-2 rounded-lg">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-black text-xs uppercase tracking-widest text-primary">AI Observation Integration</h4>
-                  <p className="text-[10px] text-slate-500 font-medium">Input values into the highlighted column to automatically generate raw readings based on the standard value.</p>
-                </div>
-              </div>
-
+            <div className="space-y-12">
               {experiment.tables.map((table) => (
-                <Card key={table.id} className="border-2 shadow-lg overflow-hidden">
-                  <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50">
-                    <CardTitle className="text-sm uppercase tracking-widest font-black">{table.label}</CardTitle>
+                <Card key={table.id} className="border-2 shadow-lg overflow-hidden printable-table">
+                  <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50 py-4">
+                    <CardTitle className="text-xs uppercase tracking-[0.2em] font-black text-slate-600 dark:text-slate-400">{table.label}</CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-6">
+                  <CardContent className="p-0">
                     <ObservationTable 
                       experimentId={experiment.id}
                       tableId={table.id}
-                      aiInputKey={table.aiInputKey}
                       columns={table.columns} 
                       data={tableData[table.id] || []} 
                       standardValue={standardValue}
@@ -234,178 +298,87 @@ export default function ExperimentPage() {
                   </CardContent>
                 </Card>
               ))}
-            </TabsContent>
+            </div>
+          </section>
 
-            <TabsContent value="analysis" className="space-y-6 animate-in fade-in">
-              <div className="grid grid-cols-1 gap-8">
-                {experiment.graphs.map((graphDef) => (
-                  <PhysicsGraph 
-                    key={graphDef.id}
-                    data={getGraphData(graphDef)} 
-                    title={graphDef.title}
-                    xLabel={graphDef.xLabel}
-                    yLabel={graphDef.yLabel}
-                    xUnit={graphDef.xUnit}
-                    yUnit={graphDef.yUnit}
-                    type={graphDef.type}
-                    multiSeries={graphDef.multiSeries}
-                    equationFormat={graphDef.equationFormat}
-                  />
-                ))}
-              </div>
-              <Card className="border-4 border-primary/20 shadow-2xl mt-8">
-                <CardHeader className="bg-primary/5 border-b">
-                  <CardTitle className="text-primary flex items-center gap-3 uppercase tracking-tighter font-black">
-                    <Calculator className="h-6 w-6" /> Result Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-12 p-10">
+          {/* Section 4: Graphs */}
+          <section className="space-y-8 no-break">
+            <div className="flex items-center gap-2 text-primary">
+              <LineChart className="h-5 w-5" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Graphical Analysis</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-12">
+              {experiment.graphs.map((graphDef) => (
+                <PhysicsGraph 
+                  key={graphDef.id}
+                  data={getGraphData(graphDef)} 
+                  title={graphDef.title}
+                  xLabel={graphDef.xLabel}
+                  yLabel={graphDef.yLabel}
+                  xUnit={graphDef.xUnit}
+                  yUnit={graphDef.yUnit}
+                  type={graphDef.type}
+                  multiSeries={graphDef.multiSeries}
+                  equationFormat={graphDef.equationFormat}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section 5: Calculation & Result */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 no-break">
+            <Card className="border-4 border-primary/20 shadow-2xl overflow-hidden bg-white">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className="text-primary flex items-center gap-3 uppercase tracking-widest font-black text-sm">
+                  <Calculator className="h-5 w-5" /> Result Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-10 space-y-10">
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400">Observed Result</p>
+                  <p className="text-5xl font-mono font-black tracking-tighter text-slate-900">
+                    {calculatedResult ? calculatedResult.toFixed(4) : "---"}
+                    <span className="text-lg ml-2 font-bold text-slate-500">{experiment.unit}</span>
+                  </p>
+                </div>
+                {error !== null && (
                   <div className="space-y-2">
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400">Determined Result</p>
-                    <p className="text-5xl font-mono font-black tracking-tighter">
-                      {calculatedResult ? calculatedResult.toFixed(4) : "---"}
-                      <span className="text-lg ml-2 font-bold text-slate-500">{experiment.unit}</span>
+                    <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400">Percentage Error</p>
+                    <p className={`text-5xl font-mono font-black tracking-tighter ${error < 5 ? "text-emerald-500" : "text-orange-500"}`}>
+                      {error.toFixed(2)}%
                     </p>
                   </div>
-                  {error !== null && (
-                    <div className="space-y-2">
-                      <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400">Percentage Error</p>
-                      <p className={`text-5xl font-mono font-black tracking-tighter ${error < 5 ? "text-emerald-500" : "text-orange-500"}`}>
-                        {error.toFixed(2)}%
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                )}
+              </CardContent>
+            </Card>
 
-            <TabsContent value="questions" className="space-y-6 animate-in fade-in">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-3 mb-8">
-                  <HelpCircle className="h-8 w-8 text-primary" />
-                  <h2 className="text-2xl font-black uppercase tracking-tight">Viva-Voce Questions</h2>
-                </div>
-                <Accordion type="single" collapsible className="w-full space-y-4">
-                  {experiment.questions.map((q, i) => (
-                    <AccordionItem key={i} value={`q-${i}`} className="border-2 rounded-2xl px-6 bg-white dark:bg-slate-900">
-                      <AccordionTrigger className="text-left font-bold text-lg hover:no-underline">
-                        {i + 1}. {q.q}
+            <Card className="border-2 shadow-xl bg-slate-900 text-white">
+              <CardHeader className="border-b border-slate-800 py-4">
+                <CardTitle className="flex items-center gap-3 uppercase tracking-widest font-black text-sm">
+                  <HelpCircle className="h-5 w-5 text-primary" /> Viva-Voce Q&A
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Accordion type="single" collapsible className="w-full">
+                  {experiment.questions.slice(0, 4).map((q, i) => (
+                    <AccordionItem key={i} value={`q-${i}`} className="border-b border-slate-800 px-6 last:border-0">
+                      <AccordionTrigger className="text-left font-bold text-xs uppercase tracking-tight hover:no-underline py-4">
+                        {q.q}
                       </AccordionTrigger>
-                      <AccordionContent className="text-slate-600 dark:text-slate-400 text-base leading-relaxed pt-2 pb-6 border-t-2 border-slate-50 dark:border-slate-800 mt-2">
+                      <AccordionContent className="text-slate-400 text-sm leading-relaxed pb-6 pt-2">
                         {q.a}
                       </AccordionContent>
                     </AccordionItem>
                   ))}
                 </Accordion>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="report" className="space-y-8 animate-in fade-in">
-              <Card className="border-2 max-w-5xl mx-auto shadow-2xl overflow-hidden bg-white">
-                <CardContent className="p-16 report-container font-serif">
-                  <div className="text-center space-y-3 mb-12 border-b-4 border-slate-900 pb-10">
-                    <h2 className="text-3xl font-black uppercase tracking-tight">Odisha University of Technology and Research</h2>
-                    <h3 className="text-xl font-bold text-slate-600">Department of Physics</h3>
-                    <div className="pt-6">
-                      <p className="text-2xl font-black bg-slate-900 text-white inline-block px-8 py-2">LABORATORY REPORT</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-8 mb-16 text-lg font-bold">
-                    <div className="space-y-4">
-                      <p className="border-b-2 border-slate-200 pb-1">NAME: <span className="text-slate-400">________________________</span></p>
-                      <p className="border-b-2 border-slate-200 pb-1">ROLL NO: <span className="text-slate-400">________________________</span></p>
-                      <p className="border-b-2 border-slate-200 pb-1">SECTION: <span className="text-slate-400">________________________</span></p>
-                    </div>
-                    <div className="space-y-4 text-right">
-                      <p className="border-b-2 border-slate-200 pb-1">EXP NO: <span className="text-slate-400">____</span></p>
-                      <p className="border-b-2 border-slate-200 pb-1">DATE: <span className="text-primary">{new Date().toLocaleDateString()}</span></p>
-                    </div>
-                  </div>
-                  <div className="space-y-12 text-slate-900">
-                    <section>
-                      <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">TITLE OF EXPERIMENT</h4>
-                      <p className="text-3xl font-black uppercase leading-none">{experiment.title}</p>
-                    </section>
-                    <section>
-                      <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">OBJECTIVE / AIM</h4>
-                      <p className="text-xl font-medium leading-relaxed">{experiment.aim}</p>
-                    </section>
-                    <section>
-                      <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">OBSERVATIONS & DATA</h4>
-                      {experiment.tables.map((table) => (
-                        <div key={table.id} className="mb-10">
-                          <h5 className="text-xs font-black mb-3 bg-slate-100 p-2 inline-block border-l-4 border-primary">{table.label}</h5>
-                          <div className="border-2 border-slate-900 overflow-x-auto">
-                            <table className="w-full text-xs font-bold">
-                              <thead className="bg-slate-900 text-white">
-                                <tr>
-                                  <th className="border-r border-slate-700 p-3 w-10 text-center">#</th>
-                                  {table.columns.map(col => (
-                                    <th key={col.key} className="border-r border-slate-700 p-3 text-left uppercase tracking-tighter">
-                                      {col.label} <br/> {col.unit && <span className="text-[10px] text-slate-400">({col.unit})</span>}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(tableData[table.id] || []).map((row, i) => (
-                                  <tr key={i} className="border-b border-slate-200">
-                                    <td className="border-r border-slate-200 p-3 text-center text-slate-400">{i+1}</td>
-                                    {table.columns.map(col => (
-                                      <td key={col.key} className="border-r border-slate-200 p-3 text-center font-mono">
-                                        {row[col.key] || "-"}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                                {(!tableData[table.id] || tableData[table.id].length === 0) && (
-                                  <tr><td colSpan={table.columns.length + 1} className="p-8 text-center text-slate-400 italic">NO DATA RECORDED</td></tr>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))}
-                    </section>
-                    <section className="bg-slate-50 p-10 rounded-3xl border-2 border-slate-200">
-                      <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">FINAL DETERMINATION</h4>
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-8">
-                          <div className="space-y-2">
-                            <p className="text-[10px] uppercase font-black text-slate-400">Observed Value</p>
-                            <p className="text-4xl font-black">
-                              {calculatedResult ? calculatedResult.toFixed(4) : "__________"} {experiment.unit}
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-[10px] uppercase font-black text-slate-400">Standard Value</p>
-                            <p className="text-4xl font-black text-slate-500">
-                              {standardValue} {experiment.unit}
-                            </p>
-                          </div>
-                        </div>
-                        {error !== null && (
-                          <div className="pt-6 border-t-2 border-slate-200">
-                            <p className="text-xl font-bold text-primary">
-                              Percentage Error: {error.toFixed(2)}%
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                    <div className="pt-24 flex justify-between font-black uppercase tracking-tighter no-print">
-                      <div className="text-center">
-                        <p className="border-t-4 border-slate-900 pt-3 px-12">Signature of Student</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="border-t-4 border-slate-900 pt-3 px-12">Faculty In-charge</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                <div className="p-6 border-t border-slate-800 text-center">
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("questions")} className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-white hover:bg-primary/20">
+                    View All Questions
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
         </div>
       </main>
     </div>

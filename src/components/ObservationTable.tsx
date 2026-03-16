@@ -3,8 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Zap } from "lucide-react";
-import { generateRowFromInput } from "@/lib/utils/physics-calc";
+import { Plus, Trash2 } from "lucide-react";
 
 interface Column {
   key: string;
@@ -15,7 +14,6 @@ interface Column {
 interface ObservationTableProps {
   experimentId: string;
   tableId: string;
-  aiInputKey?: string;
   columns: Column[];
   data: any[];
   standardValue: number;
@@ -23,12 +21,8 @@ interface ObservationTableProps {
 }
 
 export function ObservationTable({ 
-  experimentId, 
-  tableId, 
-  aiInputKey, 
   columns, 
   data, 
-  standardValue,
   onChange 
 }: ObservationTableProps) {
   const addRow = () => {
@@ -42,56 +36,50 @@ export function ObservationTable({
   };
 
   const handleCellChange = (index: number, key: string, value: string) => {
-    let newData = [...data];
-    if (key === aiInputKey) {
-      const generatedRow = generateRowFromInput(experimentId, tableId, key, value, standardValue, data[index]);
-      newData[index] = generatedRow;
-    } else {
-      newData[index] = { ...newData[index], [key]: value };
-    }
+    const newData = [...data];
+    newData[index] = { ...newData[index], [key]: value };
     onChange(newData);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border bg-card overflow-hidden shadow-sm">
-        <Table>
+    <div className="space-y-0">
+      <div className="rounded-none border-0 overflow-x-auto">
+        <Table className="border-collapse">
           <TableHeader>
-            <TableRow className="bg-slate-50 dark:bg-slate-900">
-              <TableHead className="w-12 text-center font-black">#</TableHead>
+            <TableRow className="bg-slate-900 hover:bg-slate-900 border-0">
+              <TableHead className="w-12 text-center font-black text-white text-[10px] border-r border-slate-700">#</TableHead>
               {columns.map((col) => (
-                <TableHead key={col.key} className={`font-bold text-[10px] uppercase tracking-tighter ${col.key === aiInputKey ? 'bg-primary/10 border-x border-primary/20' : ''}`}>
-                  <div className="flex items-center gap-1">
-                    {col.key === aiInputKey && <Zap className="h-3 w-3 text-primary" />}
-                    {col.label}
+                <TableHead key={col.key} className="font-black text-[10px] uppercase tracking-tighter text-white border-r border-slate-700 h-14">
+                  <div className="space-y-0.5">
+                    <div>{col.label}</div>
+                    {col.unit && <div className="text-[9px] text-slate-400 font-bold lowercase">({col.unit})</div>}
                   </div>
-                  {col.unit && <span className="text-[9px] text-muted-foreground font-normal">({col.unit})</span>}
                 </TableHead>
               ))}
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-12 no-print"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((row, rowIndex) => (
-              <TableRow key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
-                <TableCell className="text-center text-muted-foreground font-mono text-xs">{rowIndex + 1}</TableCell>
+              <TableRow key={rowIndex} className="hover:bg-slate-50 transition-colors group">
+                <TableCell className="text-center text-slate-400 font-mono text-[10px] font-black border-r border-slate-100">{rowIndex + 1}</TableCell>
                 {columns.map((col) => (
-                  <TableCell key={col.key} className={col.key === aiInputKey ? 'bg-primary/5' : ''}>
+                  <TableCell key={col.key} className="p-0 border-r border-slate-100">
                     <Input
                       type="text"
                       value={row[col.key] || ""}
                       onChange={(e) => handleCellChange(rowIndex, col.key, e.target.value)}
-                      placeholder={col.key === aiInputKey ? "AI Input" : "0.00"}
-                      className={`h-8 border-slate-200 dark:border-slate-800 focus-visible:ring-primary shadow-none bg-transparent font-mono text-xs ${col.key === aiInputKey ? 'font-bold text-primary border-primary/30' : ''}`}
+                      placeholder="---"
+                      className="h-10 border-none focus-visible:ring-1 focus-visible:ring-primary/30 shadow-none bg-transparent font-mono text-[11px] font-bold text-center"
                     />
                   </TableCell>
                 ))}
-                <TableCell>
+                <TableCell className="p-0 text-center no-print">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => removeRow(rowIndex)}
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 text-slate-300 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -100,17 +88,19 @@ export function ObservationTable({
             ))}
             {data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length + 2} className="text-center py-12 text-muted-foreground italic">
-                  No data points added yet. Use the highlighted column for AI generation.
+                <TableCell colSpan={columns.length + 2} className="text-center py-16 text-slate-400 italic font-medium">
+                  No observation data recorded yet.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <Button onClick={addRow} variant="outline" className="w-full border-dashed border-2 font-bold uppercase text-[10px] tracking-widest py-6">
-        <Plus className="mr-2 h-4 w-4" /> Add Observation Row
-      </Button>
+      <div className="no-print p-4 border-t border-dashed bg-slate-50/50">
+        <Button onClick={addRow} variant="outline" size="sm" className="w-full border-dashed border-2 font-black uppercase text-[10px] tracking-widest py-5 h-auto">
+          <Plus className="mr-2 h-4 w-4" /> Add Observation Row
+        </Button>
+      </div>
     </div>
   );
 }
