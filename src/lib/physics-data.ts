@@ -69,8 +69,7 @@ export const experiments: Experiment[] = [
           { key: "t2", label: "t2", unit: "s" },
           { key: "t3", label: "t3", unit: "s" },
           { key: "mean_t", label: "Mean t", unit: "s" },
-          { key: "T", label: "T = t/20", unit: "s" },
-          { key: "T2", label: "T²", unit: "s²" }
+          { key: "T", label: "T = t/20", unit: "s" }
         ]
       },
       {
@@ -81,6 +80,7 @@ export const experiments: Experiment[] = [
           { key: "sl_no", label: "Sl No" },
           { key: "L", label: "Equiv. Length L", unit: "cm" },
           { key: "T", label: "Time Period T", unit: "s" },
+          { key: "T2", label: "T²", unit: "s²" },
           { key: "L_T2", label: "L/T²", unit: "cm/s²" }
         ]
       }
@@ -89,9 +89,9 @@ export const experiments: Experiment[] = [
       {
         id: "l-vs-t2",
         title: "Graph of L vs T²",
-        tableId: "time-measurement",
+        tableId: "equivalent-length",
         xKey: "T2",
-        yKey: "dist_cg",
+        yKey: "L",
         xLabel: "Time period squared (T²)",
         yLabel: "Equivalent Length (L)",
         xUnit: "s²",
@@ -240,8 +240,8 @@ export const experiments: Experiment[] = [
         defaultRows: 6,
         columns: [
           { key: "load", label: "Load", unit: "kg" },
-          { key: "inc", label: "Scale Inc", unit: "cm" },
-          { key: "dec", label: "Scale Dec", unit: "cm" },
+          { key: "inc", label: "Scale Reading Inc", unit: "cm" },
+          { key: "dec", label: "Scale Reading Dec", unit: "cm" },
           { key: "mean", label: "Mean Angle", unit: "deg" },
           { key: "twist", label: "Twist θ", unit: "deg" }
         ]
@@ -255,7 +255,7 @@ export const experiments: Experiment[] = [
         xKey: "twist",
         yKey: "load",
         xLabel: "Twist angle (θ)",
-        yLabel: "Load applied",
+        yLabel: "Load",
         xUnit: "deg",
         yUnit: "kg"
       }
@@ -286,8 +286,8 @@ export const experiments: Experiment[] = [
         defaultRows: 3,
         columns: [
           { key: "tube", label: "Tube #" },
-          { key: "meniscus", label: "Meniscus", unit: "cm" },
-          { key: "needle", label: "Needle", unit: "cm" },
+          { key: "meniscus", label: "Meniscus Reading", unit: "cm" },
+          { key: "needle", label: "Needle Reading", unit: "cm" },
           { key: "h", label: "Height h", unit: "cm" }
         ]
       },
@@ -298,10 +298,7 @@ export const experiments: Experiment[] = [
         columns: [
           { key: "lhs", label: "LHS Reading", unit: "cm" },
           { key: "rhs", label: "RHS Reading", unit: "cm" },
-          { key: "d1", label: "Diameter D1", unit: "cm" },
-          { key: "lower", label: "Lower End", unit: "cm" },
-          { key: "upper", label: "Upper End", unit: "cm" },
-          { key: "d2", label: "Diameter D2", unit: "cm" }
+          { key: "d1", label: "Diameter D1", unit: "cm" }
         ]
       },
       {
@@ -324,7 +321,7 @@ export const experiments: Experiment[] = [
         xKey: "inv_r",
         yKey: "h",
         xLabel: "1/r",
-        yLabel: "Height of rise (h)",
+        yLabel: "Height (h)",
         xUnit: "cm⁻¹",
         yUnit: "cm"
       }
@@ -351,10 +348,10 @@ export const experiments: Experiment[] = [
       {
         id: "law-length",
         label: "Table 1: Frequency vs Length",
-        defaultRows: 3,
+        defaultRows: 5,
         columns: [
           { key: "obs", label: "Obs" },
-          { key: "freq", label: "Frequency", unit: "Hz" },
+          { key: "freq", label: "Frequency n", unit: "Hz" },
           { key: "inc", label: "Length Inc", unit: "cm" },
           { key: "dec", label: "Length Dec", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
@@ -365,12 +362,13 @@ export const experiments: Experiment[] = [
       {
         id: "law-tension",
         label: "Table 2: Tension vs Length",
-        defaultRows: 3,
+        defaultRows: 5,
         columns: [
-          { key: "tension", label: "Tension", unit: "N" },
+          { key: "tension", label: "Tension T", unit: "N" },
           { key: "inc", label: "Length Inc", unit: "cm" },
           { key: "dec", label: "Length Dec", unit: "cm" },
           { key: "mean_l", label: "Mean l", unit: "cm" },
+          { key: "sqrt_t", label: "√T", unit: "√N" },
           { key: "l2", label: "l²", unit: "cm²" },
           { key: "Tl2", label: "T/l²" }
         ]
@@ -379,7 +377,7 @@ export const experiments: Experiment[] = [
     graphs: [
       {
         id: "n-vs-invl",
-        title: "Verification of Law of Length (n vs 1/l)",
+        title: "Graph: n vs 1/l",
         tableId: "law-length",
         xKey: "inv_l",
         yKey: "freq",
@@ -390,9 +388,9 @@ export const experiments: Experiment[] = [
       },
       {
         id: "n-vs-sqrtt",
-        title: "Verification of Law of Tension (n vs √T)",
+        title: "Graph: n vs √T",
         tableId: "law-tension",
-        xKey: "sqrt_T",
+        xKey: "sqrt_t",
         yKey: "freq",
         xLabel: "√T",
         yLabel: "Frequency (n)",
@@ -467,7 +465,7 @@ export const experiments: Experiment[] = [
       {
         id: "laser-obs",
         label: "Observation Table",
-        defaultRows: 4,
+        defaultRows: 8,
         columns: [
           { key: "lines_cm", label: "Lines/cm" },
           { key: "element", label: "Grating Element" },
@@ -524,20 +522,28 @@ export const experiments: Experiment[] = [
     ],
     graphs: [
       {
-        id: "time-vs-v",
-        title: "Voltage vs Time Graph",
+        id: "time-vs-v-charge",
+        title: "Capacitor Charging Curve",
         tableId: "rc-data",
         xKey: "time",
-        yKey: ["v_charge", "v_discharge"],
+        yKey: "v_charge",
         xLabel: "Time",
-        yLabel: "Voltage",
+        yLabel: "Charging voltage",
         xUnit: "s",
         yUnit: "V",
-        type: "monotone",
-        multiSeries: [
-          { key: "v_charge", label: "Charging", color: "#3b82f6" },
-          { key: "v_discharge", label: "Discharging", color: "#ef4444" }
-        ]
+        type: "monotone"
+      },
+      {
+        id: "time-vs-v-discharge",
+        title: "Capacitor Discharging Curve",
+        tableId: "rc-data",
+        xKey: "time",
+        yKey: "v_discharge",
+        xLabel: "Time",
+        yLabel: "Discharging voltage",
+        xUnit: "s",
+        yUnit: "V",
+        type: "monotone"
       }
     ],
     questions: [
@@ -556,7 +562,8 @@ export const experiments: Experiment[] = [
     standardValue: 150,
     unit: "",
     aiInputFields: [
-      { key: "ib", label: "Base Current Ib", unit: "µA" }
+      { key: "vbe", label: "VBE", unit: "V" },
+      { key: "vce", label: "VCE", unit: "V" }
     ],
     tables: [
       {
@@ -649,7 +656,19 @@ export const experiments: Experiment[] = [
         ]
       }
     ],
-    graphs: [],
+    graphs: [
+      {
+        id: "l1-vs-l2",
+        title: "Verification of Wheatstone Bridge",
+        tableId: "resistance",
+        xKey: "l1",
+        yKey: "l2",
+        xLabel: "l1",
+        yLabel: "l2",
+        xUnit: "cm",
+        yUnit: "cm"
+      }
+    ],
     questions: [
       { q: "What principle used?", a: "Wheatstone bridge principle." },
       { q: "What is balancing length?", a: "Length at which galvanometer shows zero deflection." }
@@ -684,24 +703,24 @@ export const experiments: Experiment[] = [
     graphs: [
       {
         id: "forward-graph",
-        title: "Forward Bias (Voltage vs Current)",
+        title: "Forward Bias V-I Characteristics",
         tableId: "characteristics",
         xKey: "f_v",
         yKey: "f_i",
-        xLabel: "Voltage",
-        yLabel: "Current",
+        xLabel: "Forward voltage",
+        yLabel: "Forward current",
         xUnit: "V",
         yUnit: "mA",
         type: "monotone"
       },
       {
         id: "reverse-graph",
-        title: "Reverse Bias (Voltage vs Current)",
+        title: "Reverse Bias V-I Characteristics",
         tableId: "characteristics",
         xKey: "r_v",
         yKey: "r_i",
-        xLabel: "Voltage",
-        yLabel: "Current",
+        xLabel: "Reverse voltage",
+        yLabel: "Reverse current",
         xUnit: "V",
         yUnit: "µA",
         type: "monotone"

@@ -79,8 +79,7 @@ export function generateRowFromInput(
           dist_cg: inputValue,
           t1, t2, t3,
           mean_t: mean,
-          T: T_calc.toFixed(3),
-          T2: (T_calc * T_calc).toFixed(4)
+          T: T_calc.toFixed(3)
         };
       }
       break;
@@ -95,8 +94,8 @@ export function generateRowFromInput(
         return {
           ...existingRow,
           load: inputValue,
-          inc: addNoise(delta, 0.01).toFixed(3),
-          dec: addNoise(delta, 0.01).toFixed(3),
+          msr_inc: delta.toFixed(3),
+          msr_dec: delta.toFixed(3),
           mean: delta.toFixed(3),
           depression: delta.toFixed(3)
         };
@@ -114,8 +113,8 @@ export function generateRowFromInput(
         return {
           ...existingRow,
           load: inputValue,
-          inc: addNoise(theta, 0.01).toFixed(2),
-          dec: addNoise(theta, 0.01).toFixed(2),
+          inc: theta.toFixed(2),
+          dec: theta.toFixed(2),
           mean: theta.toFixed(2),
           twist: theta.toFixed(2)
         };
@@ -132,7 +131,6 @@ export function generateRowFromInput(
           ...existingRow,
           r: inputValue,
           h: h.toFixed(2),
-          inv_r: (1/r).toFixed(2),
           T: standardValue.toFixed(2)
         };
       }
@@ -141,31 +139,18 @@ export function generateRowFromInput(
     case 'sonometer': {
       if (inputKey === 'freq') {
         const n = val;
-        const T = 98000; // Constant Tension
+        const T = 98000; 
         const m_lin = 0.01;
         const l_base = (1 / (2 * n)) * Math.sqrt(T / m_lin);
         const l = addNoise(l_base, 0.02);
         return {
           ...existingRow,
           freq: inputValue,
-          inc: addNoise(l, 0.01).toFixed(2),
-          dec: addNoise(l, 0.01).toFixed(2),
+          inc: l.toFixed(2),
+          dec: l.toFixed(2),
           mean_l: l.toFixed(2),
-          inv_l: (1/l).toFixed(4)
-        };
-      } else if (inputKey === 'tension') {
-        const T = val * g_acc;
-        const n = standardValue;
-        const m_lin = 0.01;
-        const l_base = (1 / (2 * n)) * Math.sqrt(T / m_lin);
-        const l = addNoise(l_base, 0.02);
-        return {
-          ...existingRow,
-          tension: inputValue,
-          inc: addNoise(l, 0.01).toFixed(2),
-          dec: addNoise(l, 0.01).toFixed(2),
-          mean_l: l.toFixed(2),
-          sqrt_T: Math.sqrt(T).toFixed(2)
+          inv_l: (1/l).toFixed(4),
+          nl: (n * l).toFixed(2)
         };
       }
       break;
@@ -252,21 +237,25 @@ export function generateRowFromInput(
           ...existingRow,
           res_p: inputValue,
           l1: l1_noisy.toFixed(2),
-          l2: (100 - l1_noisy).toFixed(2)
+          l2: (100 - l1_noisy).toFixed(2),
+          q: standardValue.toString()
         };
       }
       break;
     }
     case 'pn-junction': {
-      if (inputKey === 'v_f') {
+      if (inputKey === 'v') {
         const v = val;
         const vt = 0.026;
         const is = 1e-9;
-        const i = is * (Math.exp(v / (1.5 * vt)) - 1) * 1e3;
+        const i_f = is * (Math.exp(v / (1.5 * vt)) - 1) * 1e3;
+        const i_r = is * 1e3 * Math.exp(v/10); 
         return {
           ...existingRow,
-          v_f: inputValue,
-          i_f: addNoise(i, 0.05).toFixed(3)
+          f_v: inputValue,
+          f_i: addNoise(i_f, 0.05).toFixed(3),
+          r_v: inputValue,
+          r_i: addNoise(i_r, 0.05).toFixed(3)
         };
       }
       break;

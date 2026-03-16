@@ -27,7 +27,6 @@ interface PhysicsGraphProps {
   yLabel: string;
   xUnit?: string;
   yUnit?: string;
-  showBestFit?: boolean;
   type?: "linear" | "monotone";
   multiSeries?: { key: string; label: string; color: string }[];
   equationFormat?: string;
@@ -52,9 +51,9 @@ export function PhysicsGraph({
 
   const validPoints = useMemo(() => {
     return data
-      .filter(p => !isNaN(p.x) && (typeof p.y === 'number' && !isNaN(p.y)))
+      .filter(p => !isNaN(p.x) && (typeof p.y === 'number' || (multiSeries && multiSeries.some(s => typeof p[s.key] === 'number'))))
       .sort((a, b) => a.x - b.x);
-  }, [data]);
+  }, [data, multiSeries]);
 
   const regression = useMemo(() => {
     if (type !== "linear" || validPoints.length < 2 || multiSeries) return null;
@@ -65,7 +64,6 @@ export function PhysicsGraph({
     if (!regression || validPoints.length < 2) return [];
     const minX = Math.min(...validPoints.map(p => p.x));
     const maxX = Math.max(...validPoints.map(p => p.x));
-    // Pad for better visual line
     const range = maxX - minX;
     const padMin = minX - (range * 0.1);
     const padMax = maxX + (range * 0.1);
@@ -116,6 +114,17 @@ export function PhysicsGraph({
   const xDomain = useCustomScale ? [parseFloat(xScale.min) || 0, parseFloat(xScale.max) || "auto"] : [0, "auto"];
   const yDomain = useCustomScale ? [parseFloat(yScale.min) || 0, parseFloat(yScale.max) || "auto"] : [0, "auto"];
 
+  if (validPoints.length < 2) {
+    return (
+      <Card className="border-2 border-dashed border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-12 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <Activity className="h-10 w-10 text-slate-300" />
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Enter at least two observation rows to generate graph.</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-2 overflow-hidden shadow-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
       <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
@@ -128,7 +137,7 @@ export function PhysicsGraph({
               <CardTitle className="text-xl font-extrabold font-headline text-slate-900 dark:text-white uppercase tracking-tight">
                 {title}
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Laboratory Plotting Engine</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Scientific Plotting Engine</p>
             </div>
           </div>
           <div className="flex items-center gap-2 no-print">
@@ -205,7 +214,7 @@ export function PhysicsGraph({
       <CardContent className="p-4 sm:p-10 bg-white dark:bg-slate-950">
         <div className="h-[500px] w-full border-2 border-slate-200 dark:border-slate-800 rounded-2xl bg-white p-6 relative">
           {/* Scientific Grid Styling Overlay */}
-          <div className="absolute inset-6 pointer-events-none border border-slate-100 grid grid-cols-10 grid-rows-10 opacity-50" />
+          <div className="absolute inset-6 pointer-events-none border border-slate-100 grid grid-cols-10 grid-rows-10 opacity-30" />
           
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
@@ -213,46 +222,46 @@ export function PhysicsGraph({
               margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
               onClick={handlePointClick}
             >
-              <CartesianGrid strokeDasharray="1 1" vertical={true} horizontal={true} stroke="#e2e8f0" strokeWidth={0.5} />
+              <CartesianGrid strokeDasharray="1 1" vertical={true} horizontal={true} stroke="#000" strokeOpacity={0.1} />
               <XAxis 
                 type="number" 
                 dataKey="x" 
                 name={xLabel} 
                 domain={xDomain as any}
                 allowDataOverflow={useCustomScale}
-                stroke="#0f172a"
+                stroke="#000"
                 strokeWidth={2}
-                tick={{fontSize: 10, fontWeight: 800, fill: '#0f172a'}}
+                tick={{fontSize: 10, fontWeight: 800, fill: '#000'}}
                 label={{ 
                   value: `${xLabel}${xUnit ? ` (${xUnit})` : ""}`, 
                   position: 'bottom', 
                   offset: 40, 
-                  style: { fontWeight: 900, fontSize: 12, fill: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.1em' } 
+                  style: { fontWeight: 900, fontSize: 12, fill: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' } 
                 }}
               />
               <YAxis 
                 type="number" 
-                stroke="#0f172a"
+                stroke="#000"
                 strokeWidth={2}
                 domain={yDomain as any}
                 allowDataOverflow={useCustomScale}
-                tick={{fontSize: 10, fontWeight: 800, fill: '#0f172a'}}
+                tick={{fontSize: 10, fontWeight: 800, fill: '#000'}}
                 label={{ 
                   value: `${yLabel}${yUnit ? ` (${yUnit})` : ""}`, 
                   angle: -90, 
                   position: 'insideLeft', 
                   offset: -45,
-                  style: { fontWeight: 900, fontSize: 12, fill: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.1em' }
+                  style: { fontWeight: 900, fontSize: 12, fill: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }
                 }}
               />
               <Tooltip 
-                cursor={{ stroke: '#0f172a', strokeWidth: 1, strokeDasharray: '4 4' }}
+                cursor={{ stroke: '#000', strokeWidth: 1, strokeDasharray: '4 4' }}
                 contentStyle={{ 
                   borderRadius: '12px', 
-                  border: '2px solid #0f172a', 
+                  border: '2px solid #000', 
                   padding: '12px',
                   backgroundColor: 'white',
-                  boxShadow: '8px 8px 0px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '4px 4px 0px rgba(0, 0, 0, 0.1)'
                 }}
               />
               <Legend 
@@ -277,13 +286,13 @@ export function PhysicsGraph({
               ) : (
                 <>
                   <Line
-                    name="Experimental Readings"
+                    name="Readings"
                     type={type === "monotone" ? "monotone" : "linear"}
                     dataKey="y"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    dot={{ r: 5, fill: "hsl(var(--primary))", stroke: "white", strokeWidth: 2 }}
-                    activeDot={{ r: 7, stroke: "white", strokeWidth: 2 }}
+                    stroke="#000"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: "#000", stroke: "white", strokeWidth: 1.5 }}
+                    activeDot={{ r: 6, stroke: "black", strokeWidth: 2 }}
                   />
                   {type === "linear" && regression && (
                     <Line
